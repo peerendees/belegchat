@@ -12,7 +12,7 @@ Diese Dateien sind für `berent-2nd-brain/02 Projekte/BelegChat/` vorbereitet.
 Einmalig einrichten (Passwort für sudo):
 
 ```bash
-sudo /Users/Shared/Entwicklung/projekte/belegchat/scripts/set-2nd-brain-permissions.sh
+sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/set-2nd-brain-permissions.sh
 ```
 
 Danach Sync **ohne** sudo.
@@ -20,15 +20,15 @@ Danach Sync **ohne** sudo.
 ## Vault kopieren
 
 ```bash
-cp -R "/Users/Shared/Entwicklung/projekte/belegchat/docs/vault/BelegChat" \
-  "/Users/Shared/Entwicklung/projekte/berent-2nd-brain/02 Projekte/"
+cp -R "/Users/Shared/Projekte/Entwicklung/projekte/belegchat/docs/vault/BelegChat" \
+  "/Users/Shared/Projekte/Entwicklung/projekte/berent-2nd-brain/02 Projekte/"
 ```
 
 Daily Notes separat:
 
 ```bash
-cp "/Users/Shared/Entwicklung/projekte/belegchat/docs/vault/05 Daily Notes/2026-07-11.md" \
-  "/Users/Shared/Entwicklung/projekte/berent-2nd-brain/05 Daily Notes/"
+cp "/Users/Shared/Projekte/Entwicklung/projekte/belegchat/docs/vault/05 Daily Notes/2026-07-11.md" \
+  "/Users/Shared/Projekte/Entwicklung/projekte/berent-2nd-brain/05 Daily Notes/"
 ```
 
 Danach in Obsidian öffnen und Wikilinks prüfen.

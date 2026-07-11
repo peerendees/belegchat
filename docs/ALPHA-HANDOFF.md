@@ -38,7 +38,7 @@ Mandant sieht Dialog und Abschluss in **zwei Threema-Chats**.
 ## Deploy (Referenz)
 
 ```bash
-cd /Users/Shared/Entwicklung/projekte/threema-decrypt
+cd /Users/Shared/Projekte/Entwicklung/projekte/threema-decrypt
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=... --project-ref xuqefeewzdvjhuquciut
 supabase functions deploy threema-decrypt --project-ref xuqefeewzdvjhuquciut --no-verify-jwt
 ```

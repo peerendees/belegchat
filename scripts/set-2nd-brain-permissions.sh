@@ -3,7 +3,7 @@
 # Einmalig mit sudo ausführen — danach Vault-Sync ohne sudo möglich.
 set -euo pipefail
 
-VAULT="/Users/Shared/Entwicklung/projekte/berent-2nd-brain"
+VAULT="/Users/Shared/Projekte/Entwicklung/projekte/berent-2nd-brain"
 OWNER="kunkel"
 GROUP="staff"
 

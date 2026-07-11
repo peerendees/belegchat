@@ -31,18 +31,22 @@ Phase 0 Pfad-Migration → Phase 1 GoBD → Phase 2 Batch → Phase 3 Dashboard 
 
 ## Phase 0 — Pfad-Migration (vor Phase 1)
 
-**Ziel:** BelegChat-Stack von `/Users/Shared/Entwicklung/projekte/` nach `~/Entwicklung/projekte/`.
+**Ziel:** BelegChat-Stack von `/Users/Shared/Projekte/Entwicklung/projekte/` nach `~/Entwicklung/projekte/`.
 
-Details: [`PFAD-MIGRATION.md`](PFAD-MIGRATION.md) · Skript: `scripts/migrate-to-home-entwicklung.sh`
+Details: [`PFAD-MIGRATION.md`](PFAD-MIGRATION.md)
 
 ```bash
-./scripts/migrate-to-home-entwicklung.sh --dry-run
-./scripts/migrate-to-home-entwicklung.sh --yes --symlinks --remove-stub --fix-permissions
+# 1. Einmalig als admin:
+su admin
+sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ownership.sh
+
+# 2. Als kunkel:
+./scripts/migrate-to-home-entwicklung.sh --yes --remove-stub --fix-permissions
 ```
 
 ### Kurzfassung
 
-- `~/Entwicklung` ≠ `/Users/Shared/Entwicklung/projekte` — zwei Bäume
+- `~/Entwicklung` ≠ `/Users/Shared/Projekte/Entwicklung/projekte` — zwei Bäume
 - **Kanonisch heute:** Shared (Alpha, POST-ALPHA-PLAN)
 - **Ziel:** `~/Entwicklung/projekte/` (laut `cursor-workspaces.txt`)
 - **Löschen:** `~/Entwicklung/projekte/belegchat-project` (veralteter Stub)

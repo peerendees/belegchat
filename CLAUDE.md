@@ -58,13 +58,13 @@ n8n-workflows/n8n/MYpHUIHNMuIUR1ic/  ← Live-Workflow-Export
 
 | Phase | Thema | Linear | Status |
 |-------|-------|--------|--------|
-| **0** | Pfad-Migration Shared → `~/Entwicklung/projekte/` | — | offen |
-| **1** | GoBD: Zeitstempel, Hash, Unveränderbarkeit | BER-92 *(anlegen)* | offen |
+| **0** | Pfad-Migration → `~/Entwicklung/projekte/` | [BER-94](https://linear.app/berent/issue/BER-94) | ✓ |
+| **1** | GoBD: Zeitstempel, Hash, Unveränderbarkeit | [BER-92](https://linear.app/berent/issue/BER-92) | **aktuell** |
 | 2 | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | offen |
-| 3 | Dashboard Threema-ID + Passkey | BER-93 *(anlegen)* | offen |
-| 4 | DATEV, Landing, RLS final | BER-91, BER-22 | offen |
+| 3 | Dashboard Threema-ID + Passkey | [BER-93](https://linear.app/berent/issue/BER-93) | offen |
+| 4 | DATEV, Landing, RLS final | [BER-91](https://linear.app/berent/issue/BER-91), [BER-22](https://linear.app/berent/issue/BER-22) | offen |
 
-**Start:** Phase 0 — `./scripts/migrate-to-home-entwicklung.sh --dry-run` (siehe `docs/PFAD-MIGRATION.md`)
+**Start:** Phase 1 — [BER-92](https://linear.app/berent/issue/BER-92) GoBD-Härtung
 
 ---
 
