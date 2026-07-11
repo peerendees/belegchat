@@ -78,7 +78,7 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] RPC `append_pending_seite`: atomarer Seiten-Append, `seite_nr` serverseitig — Race bei schnellen Folgefotos eliminiert
 - [x] n8n: Push nach `Blob entschlüsseln` („Seite N erhalten…"), neuer Fehlerpfad „Seite-Fehler melden" (Korrektur-Push)
 - [x] Live-Instanz per API aktualisiert + verifiziert
-- [ ] **Offen:** E2E-Test (Mehrseiten-Beleg, gefühlte Latenz), PRs threema-decrypt#3 + n8n-workflows#12 mergen
+- [x] **E2E-Test grün** (`01-2026-0007`, 2-seitig): Push spürbar früher, Seiten per RPC (`seite_nr` serverseitig), Audit vollständig
 
 ## Post-Alpha (P2)
 
