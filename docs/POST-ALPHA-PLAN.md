@@ -93,16 +93,17 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ### Aufgaben
 
-- [ ] n8n-Webhook `belegchat-import-pdf` (Bearer `IMPORT_API_TOKEN`)
-- [ ] Edge Action `archive-pdf-pages` (PDF → Seiten)
-- [ ] `eingangskanal: batch` in Beleg-Metadaten
-- [ ] CLI `scripts/beleg-import/` (`import`, `watch`)
-- [ ] `docs/PDF-IMPORT.md` + Vault SOP-PDF-Import + ADR-04
+- [x] n8n-Webhook `belegchat-import-pdf` (Bearer `IMPORT_API_TOKEN`) — Workflow `scLbdf5AbS8ojqJD`, aktiv
+- [x] Edge Action `archive-beleg-pdf` — *statt `archive-pdf-pages`: PDF bleibt ungeteiltes GoBD-Original, siehe ADR-04* (+ `ocr-storage-pdf`, Edge v18)
+- [x] `eingangskanal: batch` in Beleg-Metadaten (Migration `eingangskanal_batch`)
+- [x] CLI `scripts/beleg-import/` (`import`, `watch`)
+- [x] `docs/PDF-IMPORT.md` + Vault SOP-PDF-Import + ADR-04
 
 ### DoD
 
-- CLI importiert Test-PDF → Beleg mit `eingangskanal: batch`
-- GoBD-Felder wie Threema-Kanal
+- [ ] CLI importiert Test-PDF → Beleg mit `eingangskanal: batch`
+  - **Blockiert durch einmaligen manuellen Schritt:** `IMPORT_API_TOKEN` in n8n-Server-`.env` setzen (Wert aus `belegchat/.env.local`), n8n neu starten — Webhook antwortet bis dahin bewusst mit 503
+- [ ] GoBD-Felder wie Threema-Kanal (Duplikat-Test 409 inklusive)
 
 ---
 
