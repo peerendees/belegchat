@@ -28,11 +28,12 @@ cd ~/Entwicklung/projekte/belegchat
 # Einzelne PDFs
 node scripts/beleg-import/beleg-import.mjs import rechnung.pdf
 
-# Hot-Folder (Dauerbetrieb)
-node scripts/beleg-import/beleg-import.mjs watch ~/BelegChat-Eingang
+# Watch auf StB-Ablage (Standard aus IMPORT_WATCH_DIR, {jahr} = aktuelles Jahr):
+# iCloud: …/Papierlos/Steuerberater/Belege/StB Belege 2026
+node scripts/beleg-import/beleg-import.mjs watch
 ```
 
-Hot-Folder-Verhalten: alle 5 s Scan; Erfolg → `importiert/`, Fehler → `fehler/` + `<name>.err.txt`.
+**Keep-Modus (Standard):** Dateien bleiben in der StB-Ablage liegen; Fortschritt in `.beleg-import-state.json` (synct via iCloud mit). `--baseline` markiert den Bestand als „gesehen" (kein Import), `--move` liefert klassisches Hot-Folder-Verhalten (`importiert/` / `fehler/`). iCloud-Platzhalter werden per `brctl download` geholt; Import erst nach stabiler Dateigröße (≈5 s).
 
 ## Was passiert pro PDF
 
