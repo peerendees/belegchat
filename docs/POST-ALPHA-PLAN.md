@@ -129,15 +129,17 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ### Aufgaben
 
-- [ ] `@supabase/supabase-js`, `@simplewebauthn/server`, `@simplewebauthn/browser`
-- [ ] RLS: `mandant_id = auth.jwt()->>'mandant_id'`
-- [ ] Freigabe-UI + `audit_log` (`beleg_freigegeben`, `dokumentation_bestaetigt`)
-- [ ] `docs/AUTH.md` + Vault SOP-Dashboard-Auth + ADR-05
+- [x] `@simplewebauthn/server` + `@simplewebauthn/browser` v13, `jose`, `postgres` — *statt `@supabase/supabase-js`: dedizierte DB-Rolle `dashboard_service`, siehe ADR-05*
+- [x] RLS mandantenisoliert — *via `current_setting('app.mandant_id')` statt `auth.jwt()`: kein Supabase-Key im App-Server nötig (ADR-05); Catch-all-Policy `belege_authenticated_lesen` entfernt*
+- [x] Freigabe-UI + `audit_log` (`beleg_freigegeben`, `dokumentation_bestaetigt`; `konto_geaendert`/`status_change` via Bestands-Trigger `belege_audit`)
+- [x] `docs/AUTH.md` + Vault SOP-Dashboard-Auth + ADR-05
 
 ### DoD
 
-- Passkey-Login für Test-Mandant `BUMFMZ39`
-- Nur eigene Belege sichtbar; Freigabe gesperrt durch Phase-1-Trigger
+- [ ] Passkey-Login für Test-Mandant `BUMFMZ39` — *API-seitig getestet (Optionen/Challenges); echte Passkey-Zeremonie: Nutzer-Test auf `/register` mit provisioniertem Code offen*
+- [x] Nur eigene Belege sichtbar (BUMFMZ39: 38, VDUZ9S7E: 4, Kreuzzugriff 404); Freigabe gesperrt durch Phase-1-Trigger (Update nach `geprueft` blockiert)
+
+**Deploy offen:** Vercel-Envs + `WEBAUTHN_RP_ID`/`ORIGIN` auf Produktions-Domain
 
 ---
 

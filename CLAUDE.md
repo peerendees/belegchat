@@ -60,12 +60,12 @@ n8n-workflows/n8n/scLbdf5AbS8ojqJD/  ← PDF-Import-Workflow-Export
 | Phase | Thema | Linear | Status |
 |-------|-------|--------|--------|
 | **0** | Pfad-Migration → `~/Entwicklung/projekte/` | [BER-94](https://linear.app/berent/issue/BER-94) | ✓ |
-| **1** | GoBD: Zeitstempel, Hash, Unveränderbarkeit | [BER-92](https://linear.app/berent/issue/BER-92) | **aktuell** |
-| 2 | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | offen |
-| 3 | Dashboard Threema-ID + Passkey | [BER-93](https://linear.app/berent/issue/BER-93) | offen |
+| **1** | GoBD: Zeitstempel, Hash, Unveränderbarkeit | [BER-92](https://linear.app/berent/issue/BER-92) | ✓ |
+| **2** | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | ✓ |
+| **3** | Dashboard Threema-ID + Passkey | [BER-93](https://linear.app/berent/issue/BER-93) | **aktuell** — gebaut, Passkey-E2E + Deploy offen |
 | 4 | DATEV, Landing, RLS final | [BER-91](https://linear.app/berent/issue/BER-91), [BER-22](https://linear.app/berent/issue/BER-22) | offen |
 
-**Start:** Phase 1 — [BER-92](https://linear.app/berent/issue/BER-92) GoBD-Härtung
+**Doku:** GoBD `docs/GOBD.md` · PDF-Import `docs/PDF-IMPORT.md` · Auth `docs/AUTH.md`
 
 ---
 
@@ -88,11 +88,16 @@ n8n-workflows/n8n/scLbdf5AbS8ojqJD/  ← PDF-Import-Workflow-Export
 - Übersicht: `SICHERHEIT.md`, `threema-decrypt/DEPLOY.md`
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
 DECRYPT_API_TOKEN=          # Edge + n8n
-SUPABASE_SERVICE_ROLE_KEY=  # Edge Secrets
-IMPORT_API_TOKEN=           # Phase 2 n8n-Webhook
+SUPABASE_SERVICE_ROLE_KEY=  # Edge Secrets (nur Edge — nie im Dashboard!)
+IMPORT_API_TOKEN=           # Phase 2 n8n-Webhook (auch in n8n-Server-.env)
+IMPORT_WATCH_DIR=           # Phase 2 CLI: Belege/Input
+IMPORT_ARCHIVE_DIR=         # Phase 2 CLI: Belege/StB Belege {jahr}
+IMPORT_ERROR_DIR=           # Phase 2 CLI: Belege/Fehler Import
+DASHBOARD_DB_URL=           # Phase 3: Rolle dashboard_service via Pooler (ADR-05)
+AUTH_SESSION_SECRET=        # Phase 3: Session-/Challenge-JWTs
+WEBAUTHN_RP_ID=             # Phase 3: localhost | app.belegchat.de
+WEBAUTHN_ORIGIN=            # Phase 3: http://localhost:3000 | https://…
 ```
 
 ---
