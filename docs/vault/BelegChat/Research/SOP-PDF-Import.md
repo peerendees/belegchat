@@ -28,12 +28,11 @@ cd ~/Entwicklung/projekte/belegchat
 # Einzelne PDFs
 node scripts/beleg-import/beleg-import.mjs import rechnung.pdf
 
-# Watch auf StB-Ablage (Standard aus IMPORT_WATCH_DIR, {jahr} = aktuelles Jahr):
-# iCloud: …/Papierlos/Steuerberater/Belege/StB Belege 2026
+# Watch auf den Input-Ordner (…/Papierlos/Steuerberater/Belege/Input)
 node scripts/beleg-import/beleg-import.mjs watch
 ```
 
-**Keep-Modus (Standard):** Dateien bleiben in der StB-Ablage liegen; Fortschritt in `.beleg-import-state.json` (synct via iCloud mit). `--baseline` markiert den Bestand als „gesehen" (kein Import), `--move` liefert klassisches Hot-Folder-Verhalten (`importiert/` / `fehler/`). iCloud-Platzhalter werden per `brctl download` geholt; Import erst nach stabiler Dateigröße (≈5 s).
+**Drei-Ordner-Konzept:** PDFs in `Belege/Input/` ablegen → Import → Erfolg: Datei wandert automatisch in `Belege/StB Belege <Belegjahr>/` (Jahr aus KI-Datum) · Fehler & Duplikate: `Belege/Fehler Import/` + `<name>.err.txt`. iCloud-Platzhalter werden per `brctl download` geholt; Import erst nach stabiler Dateigröße (≈5 s).
 
 ## Was passiert pro PDF
 

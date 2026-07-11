@@ -34,21 +34,19 @@ liefert HTTP 409.
 # Einzelimport
 node scripts/beleg-import/beleg-import.mjs import rechnung.pdf [weitere.pdf ...]
 
-# Watch auf Standard-Ordner (IMPORT_WATCH_DIR, {jahr} → aktuelles Jahr)
+# Watch auf den Input-Ordner (Standard aus IMPORT_WATCH_DIR)
 node scripts/beleg-import/beleg-import.mjs watch
-
-# Watch auf beliebigen Ordner / Optionen
-node scripts/beleg-import/beleg-import.mjs watch ~/BelegChat-Eingang --move
-node scripts/beleg-import/beleg-import.mjs watch --baseline
 ```
 
-**Watch-Modi:**
+**Watch-Konzept (StB-Ablage in iCloud):**
 
-| Modus | Verhalten |
-|-------|-----------|
-| **Keep** (Standard) | Dateien bleiben unangetastet liegen — gedacht für die StB-Ablage in iCloud. Fortschritt in `.beleg-import-state.json` im Ordner; Duplikate/Fehler werden vermerkt, Fehler erst bei Dateiänderung erneut versucht |
-| `--move` | klassischer Hot-Folder: Erfolg → `importiert/`, Fehler → `fehler/` + `.err.txt` |
-| `--baseline` | vorhandene PDFs nur als „gesehen" markieren (kein Import) — danach werden nur **neu** hinzukommende Dateien importiert |
+```
+Belege/Input/               ← hier PDFs ablegen (Hot-Folder, 5-s-Scan)
+Belege/StB Belege {jahr}/   ← Erfolg: Datei wandert in die Jahres-Ablage
+Belege/Fehler Import/       ← Fehler & Duplikate, jeweils mit <name>.err.txt
+```
+
+Das `{jahr}` ist das **Belegjahr**: primär das KI-erkannte `beleg_datum`, sonst das Jahr aus der Beleg-Nr, sonst das aktuelle Jahr. Bei Namenskollision im Ziel wird ` (2)` angehängt, nichts wird überschrieben.
 
 iCloud-Besonderheiten: `.icloud`-Platzhalter werden per `brctl download` angestoßen; eine Datei wird erst importiert, wenn ihre Größe über zwei Scans (≈5 s) stabil ist.
 
@@ -58,7 +56,9 @@ Konfiguration in `belegchat/.env.local` (nie committen):
 IMPORT_API_TOKEN=…      # muss identisch in der n8n-Instanz gesetzt sein
 IMPORT_WEBHOOK_URL=https://n8n.srv1098810.hstgr.cloud/webhook/belegchat-import-pdf
 IMPORT_THREEMA_ID=BUMFMZ39
-IMPORT_WATCH_DIR=/Users/kunkel/Library/Mobile Documents/com~apple~CloudDocs/Papierlos/Steuerberater/Belege/StB Belege {jahr}
+IMPORT_WATCH_DIR=…/Papierlos/Steuerberater/Belege/Input
+IMPORT_ARCHIVE_DIR=…/Papierlos/Steuerberater/Belege/StB Belege {jahr}
+IMPORT_ERROR_DIR=…/Papierlos/Steuerberater/Belege/Fehler Import
 ```
 
 Limits: max. 15 MB pro PDF, nur `%PDF-`-Dateien; Edge validiert zusätzlich per pdf-lib.
