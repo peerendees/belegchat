@@ -101,9 +101,10 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ### DoD
 
-- [ ] CLI importiert Test-PDF → Beleg mit `eingangskanal: batch`
-  - **Blockiert durch einmaligen manuellen Schritt:** `IMPORT_API_TOKEN` in n8n-Server-`.env` setzen (Wert aus `belegchat/.env.local`), n8n neu starten — Webhook antwortet bis dahin bewusst mit 503
-- [ ] GoBD-Felder wie Threema-Kanal (Duplikat-Test 409 inklusive)
+- [x] CLI importiert Test-PDF → Beleg `01-2026-0008` mit `eingangskanal: batch` (2026-07-11)
+- [x] GoBD-Felder wie Threema-Kanal — PDF-Original mit Hash + `archived_at`, Audit vollständig, Duplikat → 409 (Edge-Pre-Check)
+
+**Phase 2 DoD erfüllt** — Rest: PRs mergen (threema-decrypt#4, n8n-workflows#13, belegchat#3)
 
 ---
 

@@ -87,8 +87,8 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] n8n-Workflow „BelegChat PDF-Import" (`scLbdf5AbS8ojqJD`) — per API angelegt, **aktiv**, Bearer-Auth, Fehlerpfade mit sauberen HTTP-Codes
 - [x] CLI `belegchat/scripts/beleg-import/` (`import`, `watch`/Hot-Folder) — Transport getestet
 - [x] Doku: `docs/PDF-IMPORT.md`, [[Research/SOP-PDF-Import]], [[Decisions/ADR-04 PDF als GoBD-Original]]
-- [ ] **Manuell (Marcus):** `IMPORT_API_TOKEN` (aus `belegchat/.env.local`) in n8n-Server-`.env` + Neustart
-- [ ] Danach E2E: Test-PDF-Import + Duplikat-Test (409)
+- [x] `IMPORT_API_TOKEN` serverseitig gesetzt (Marcus: docker compose up -d + environment-Passthrough)
+- [x] **E2E grün:** Test-PDF → Beleg `01-2026-0008` (batch, SKR04 6930, PDF-Original + Audit) · Duplikat → 409 via Edge-Pre-Check (spart Storage/OCR)
 
 ## Post-Alpha (P2)
 

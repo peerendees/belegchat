@@ -71,8 +71,8 @@ Danach n8n neu starten. Ohne den Wert antwortet der Webhook mit `503 IMPORT_API_
 | 422 | Keine valide PDF (Magic Bytes / pdf-lib) |
 | 503 | Token serverseitig nicht konfiguriert |
 
-## DoD-Nachweis
+## DoD-Nachweis (2026-07-11)
 
-- [ ] `IMPORT_API_TOKEN` in n8n-Instanz gesetzt (manuell)
-- [ ] CLI importiert Test-PDF → Beleg `eingangskanal: batch`, `beleg_seiten` + `audit_log` wie Threema-Kanal
-- [ ] Duplikat-Test: zweiter Import derselben PDF → 409
+- [x] `IMPORT_API_TOKEN` in n8n-Instanz gesetzt (docker compose up -d + environment-Passthrough)
+- [x] CLI importiert Test-PDF → Beleg `01-2026-0008` (`eingangskanal: batch`, SKR04 `6930`, `beleg_seiten` 1× `application/pdf` mit `archived_at`, Audit `erstellt` + `seite_archiviert`)
+- [x] Duplikat-Test: zweiter Import derselben PDF → `409 Duplikat: bereits archiviert als 01-2026-0008` (Edge-Pre-Check vor Upload/OCR — keine Storage-/OCR-Kosten für Duplikate)
