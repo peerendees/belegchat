@@ -58,6 +58,8 @@ function fail(msg) {
   process.exit(1);
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function importPdf(filePath) {
   const abs = resolve(filePath);
   if (!existsSync(abs)) throw new Error(`Datei nicht gefunden: ${abs}`);
@@ -65,30 +67,51 @@ async function importPdf(filePath) {
   if (bytes.length > MAX_BYTES) throw new Error(`PDF zu groß (${(bytes.length / 1e6).toFixed(1)} MB, max 15 MB)`);
   if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") throw new Error("Keine PDF-Datei (Magic Bytes fehlen)");
 
-  const res = await fetch(URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${TOKEN}`,
-    },
-    body: JSON.stringify({
-      threemaId: THREEMA_ID,
-      fileName: basename(abs),
-      pdfBase64: bytes.toString("base64"),
-    }),
+  const body = JSON.stringify({
+    threemaId: THREEMA_ID,
+    fileName: basename(abs),
+    pdfBase64: bytes.toString("base64"),
   });
 
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 300) }; }
+  // OCR/KI sind rate-limitiert: transiente Fehler (Netz, 429, 5xx) mit Backoff wiederholen
+  let lastErr = "";
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    let res, text;
+    try {
+      res = await fetch(URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${TOKEN}`,
+        },
+        body,
+      });
+      text = await res.text();
+    } catch (e) {
+      lastErr = `Netzwerkfehler: ${e.message}`;
+      await sleep(attempt * 10000);
+      continue;
+    }
 
-  if (res.status === 409) {
-    return { duplicate: true, error: data.error };
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 300) }; }
+
+    // Echtes Duplikat nur mit Edge-Kennung — PostgREST-Konflikte (FK) sind ebenfalls 409
+    if (res.status === 409 && /^Duplikat/.test(data.error || "")) {
+      return { duplicate: true, error: data.error };
+    }
+    if (res.ok && data.success) {
+      return data; // { success, beleg_nr, beleg_id, beleg_datum, seiten }
+    }
+
+    lastErr = `HTTP ${res.status}: ${data.error || text.slice(0, 300)}`;
+    if (res.status >= 500 || res.status === 429) {
+      await sleep(attempt * 10000);
+      continue;
+    }
+    break; // 4xx (außer 429): nicht wiederholen
   }
-  if (!res.ok || !data.success) {
-    throw new Error(`HTTP ${res.status}: ${data.error || text.slice(0, 300)}`);
-  }
-  return data; // { success, beleg_nr, beleg_id, beleg_datum, seiten }
+  throw new Error(lastErr);
 }
 
 async function cmdImport(files) {
@@ -188,6 +211,8 @@ async function cmdWatch(args) {
         sizes.delete(name);
         busy.delete(name);
       }
+      // Pacing: OCR/KI nicht im Akkord befeuern (Mistral-Rate-Limit)
+      await sleep(3000);
     }
   }
 
