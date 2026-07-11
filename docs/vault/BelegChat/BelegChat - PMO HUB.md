@@ -28,7 +28,7 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 |-------|-------|
 | **Beta** | Threema E2E Einzelseite grün (2026-07-10, Beleg `01-2026-0003`) |
 | **Alpha** | **E2E grün** (2026-07-11, Beleg `01-2026-0004`, Mehrseiten + GoBD) |
-| **Post-Alpha** | **Phase 1 GoBD umgesetzt** (DB + Edge live, 2026-07-11) — n8n-Import + E2E-Testbeleg offen |
+| **Post-Alpha** | **Phase 1 GoBD abgeschlossen** (DB + Edge + n8n live, E2E `01-2026-0005`, 2026-07-11) — PRs offen |
 
 ## Erledigt 2026-07-10 (Beta)
 
@@ -66,7 +66,9 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 - [x] Alpha-Migration nachträglich versioniert (`threema-decrypt/supabase/migrations/`)
 - [x] n8n-Export: `archived_at` + `seite_archiviert`-Audit pro Seite ([[Decisions/ADR-03 GoBD-Härtung DB]])
 - [x] 12 DB-Tests grün (Duplikat, Hash-Format, Update-/Delete-Sperren)
-- [ ] **Offen:** Workflow-JSON in Live-n8n importieren, dann E2E-Testbeleg (BUMFMZ39)
+- [x] Live-n8n per API aktualisiert (Editor-Save scheiterte an Session; `N8N_API_KEY` jetzt in `n8n-workflows/.env`)
+- [x] **E2E-Testbeleg `01-2026-0005`** (2-seitig): `archived_at` = echte Upload-Zeitpunkte, 2× `seite_archiviert` im Audit-Log
+- [ ] **Offen:** 3 PRs mergen, dann BER-92 → Done
 
 ## Post-Alpha (P2)
 
