@@ -66,19 +66,22 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ### Aufgaben
 
-- [ ] Migration `post_alpha_gobd_hardening.sql` in `threema-decrypt/supabase/migrations/`
-- [ ] Alpha-Migration `alpha_multipage_gobd` versionieren (fehlt im Repo)
-- [ ] `archived_at` in Edge `archive-beleg-seite` + `beleg_seiten`
-- [ ] Audit `seite_archiviert` pro Seite in n8n
-- [ ] `UNIQUE (mandant_id, gobd_hash)` + Hash-Format-Constraint
-- [ ] DB-Trigger: Unveränderbarkeit bei `geprueft`, `audit_log` append-only
-- [ ] RLS auf `pending_belege`, `beleg_seiten`, `belege` (User-Policy Phase 3)
-- [ ] `docs/GOBD.md` + Vault ADR-03
+- [x] Migration `post_alpha_gobd_hardening.sql` in `threema-decrypt/supabase/migrations/` (`20260711075401`)
+- [x] Alpha-Migration `alpha_multipage_gobd` versionieren (fehlt im Repo)
+- [x] `archived_at` in Edge `archive-beleg-seite` + `beleg_seiten` (Edge v16 deployed)
+- [x] Audit `seite_archiviert` pro Seite in n8n — *Export + Live-Instanz (per API, 2026-07-11)*
+- [x] `UNIQUE (mandant_id, gobd_hash)` + Hash-Format-Constraint
+- [x] DB-Trigger: Unveränderbarkeit bei `geprueft`, `audit_log` append-only
+- [x] RLS auf `pending_belege`, `beleg_seiten`, `belege` (User-Policy Phase 3)
+- [x] `docs/GOBD.md` + Vault ADR-03
 
 ### DoD
 
-- Testbeleg mit `archived_at` pro Seite, Duplikat-Test, Audit `seite_archiviert`
-- Migration angewendet auf Supabase `xuqefeewzdvjhuquciut`
+- [x] Testbeleg mit `archived_at` pro Seite, Duplikat-Test, Audit `seite_archiviert`
+  - 12 Trigger-/Constraint-Tests grün (inkl. Duplikat) + E2E-Testbeleg `01-2026-0005` (2-seitig, echte Upload-Zeitstempel, 2× `seite_archiviert`) — 2026-07-11
+- [x] Migration angewendet auf Supabase `xuqefeewzdvjhuquciut`
+
+**Phase 1 DoD erfüllt** — Rest: PRs mergen (threema-decrypt#2, n8n-workflows#11, belegchat#1)
 
 **Repo-Pfade:** `threema-decrypt/supabase/functions/threema-decrypt/index.ts`, `n8n-workflows/n8n/MYpHUIHNMuIUR1ic/`
 

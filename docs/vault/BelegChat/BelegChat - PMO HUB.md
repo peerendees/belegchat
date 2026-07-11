@@ -11,6 +11,7 @@ governance: "[[Projekt-Governance]]"
 related:
   - "[[Research/POST-ALPHA-Implementierungsplan]]"
   - "[[Decisions/ADR-02 Mehrseiten-Fertig-UX]]"
+  - "[[Decisions/ADR-03 GoBD-Härtung DB]]"
 ---
 
 # BelegChat
@@ -27,7 +28,7 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 |-------|-------|
 | **Beta** | Threema E2E Einzelseite grün (2026-07-10, Beleg `01-2026-0003`) |
 | **Alpha** | **E2E grün** (2026-07-11, Beleg `01-2026-0004`, Mehrseiten + GoBD) |
-| **Post-Alpha** | **Plan steht** — Phase 1 GoBD → Phase 2 Batch → Phase 3 Dashboard |
+| **Post-Alpha** | **Phase 1 GoBD abgeschlossen** (DB + Edge + n8n live, E2E `01-2026-0005`, 2026-07-11) — PRs offen |
 
 ## Erledigt 2026-07-10 (Beta)
 
@@ -55,6 +56,20 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 - [x] SOP beschreibt Flow inkl. GoBD + Troubleshooting
 - [x] Testbeleg Mehrseiten E2E grün
 
+## Erledigt 2026-07-11 (Post-Alpha Phase 1 — BER-92)
+
+- [x] Migration `post_alpha_gobd_hardening` (20260711075401) auf `xuqefeewzdvjhuquciut` angewendet
+- [x] `beleg_seiten.archived_at` + Edge `archive-beleg-seite` liefert `archivedAt` (v16 deployed)
+- [x] Duplikat-Schutz `UNIQUE (mandant_id, gobd_hash)` + Hash-Format-Checks
+- [x] Trigger: Festschreibung ab `geprueft`, `beleg_seiten` unveränderlich, `audit_log` append-only
+- [x] RLS aktiv auf `pending_belege` + `beleg_seiten`; offene `audit_insert`-Policy entfernt
+- [x] Alpha-Migration nachträglich versioniert (`threema-decrypt/supabase/migrations/`)
+- [x] n8n-Export: `archived_at` + `seite_archiviert`-Audit pro Seite ([[Decisions/ADR-03 GoBD-Härtung DB]])
+- [x] 12 DB-Tests grün (Duplikat, Hash-Format, Update-/Delete-Sperren)
+- [x] Live-n8n per API aktualisiert (Editor-Save scheiterte an Session; `N8N_API_KEY` jetzt in `n8n-workflows/.env`)
+- [x] **E2E-Testbeleg `01-2026-0005`** (2-seitig): `archived_at` = echte Upload-Zeitpunkte, 2× `seite_archiviert` im Audit-Log
+- [ ] **Offen:** 3 PRs mergen, dann BER-92 → Done
+
 ## Post-Alpha (P2)
 
 **Implementierungsplan:** [[Research/POST-ALPHA-Implementierungsplan]] · Claude Code: `belegchat/docs/POST-ALPHA-PLAN.md`
@@ -64,7 +79,7 @@ Siehe auch [[Research/Post-Alpha-Roadmap]].
 | Phase | Thema | Linear | Status |
 |-------|-------|--------|--------|
 | 0 | Pfad-Migration Shared → `~/Entwicklung/projekte/` | — | offen |
-| 1 | GoBD: Zeitstempel, Hash, Unveränderbarkeit | BER-92 *(anlegen)* | offen |
+| 1 | GoBD: Zeitstempel, Hash, Unveränderbarkeit | BER-92 | **umgesetzt** — n8n-Import + E2E offen |
 | 2 | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | offen |
 | 3 | Dashboard Threema-ID + Passkey | BER-93 *(anlegen)* | offen |
 | 4 | RLS final, DATEV, Landing | BER-91, BER-22 | offen |
