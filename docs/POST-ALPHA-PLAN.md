@@ -93,16 +93,18 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ### Aufgaben
 
-- [ ] n8n-Webhook `belegchat-import-pdf` (Bearer `IMPORT_API_TOKEN`)
-- [ ] Edge Action `archive-pdf-pages` (PDF → Seiten)
-- [ ] `eingangskanal: batch` in Beleg-Metadaten
-- [ ] CLI `scripts/beleg-import/` (`import`, `watch`)
-- [ ] `docs/PDF-IMPORT.md` + Vault SOP-PDF-Import + ADR-04
+- [x] n8n-Webhook `belegchat-import-pdf` (Bearer `IMPORT_API_TOKEN`) — Workflow `scLbdf5AbS8ojqJD`, aktiv
+- [x] Edge Action `archive-beleg-pdf` — *statt `archive-pdf-pages`: PDF bleibt ungeteiltes GoBD-Original, siehe ADR-04* (+ `ocr-storage-pdf`, Edge v18)
+- [x] `eingangskanal: batch` in Beleg-Metadaten (Migration `eingangskanal_batch`)
+- [x] CLI `scripts/beleg-import/` (`import`, `watch`)
+- [x] `docs/PDF-IMPORT.md` + Vault SOP-PDF-Import + ADR-04
 
 ### DoD
 
-- CLI importiert Test-PDF → Beleg mit `eingangskanal: batch`
-- GoBD-Felder wie Threema-Kanal
+- [x] CLI importiert Test-PDF → Beleg `01-2026-0008` mit `eingangskanal: batch` (2026-07-11)
+- [x] GoBD-Felder wie Threema-Kanal — PDF-Original mit Hash + `archived_at`, Audit vollständig, Duplikat → 409 (Edge-Pre-Check)
+
+**Phase 2 DoD erfüllt** — Rest: PRs mergen (threema-decrypt#4, n8n-workflows#13, belegchat#3)
 
 ---
 

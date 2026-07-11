@@ -43,11 +43,12 @@ belegchat/
 │   ├── ALPHA-HANDOFF.md      ← Alpha-Stand (E2E grün)
 │   └── vault/                ← Obsidian-Staging (PMO, ADRs, SOPs)
 ├── src/app/                  ← Next.js (noch Template)
-├── scripts/                  ← beleg-import CLI (Phase 2, noch leer)
+├── scripts/beleg-import/     ← PDF-Batch CLI (import, watch) — docs/PDF-IMPORT.md
 └── SICHERHEIT.md
 
 threema-decrypt/              ← Edge Function (Schwester-Repo im Monorepo)
-n8n-workflows/n8n/MYpHUIHNMuIUR1ic/  ← Live-Workflow-Export
+n8n-workflows/n8n/MYpHUIHNMuIUR1ic/  ← Threema-Workflow-Export
+n8n-workflows/n8n/scLbdf5AbS8ojqJD/  ← PDF-Import-Workflow-Export
 ```
 
 ---
