@@ -34,9 +34,23 @@ liefert HTTP 409.
 # Einzelimport
 node scripts/beleg-import/beleg-import.mjs import rechnung.pdf [weitere.pdf ...]
 
-# Hot-Folder (alle 5 s; erledigt → importiert/, Fehler → fehler/ + .err.txt)
-node scripts/beleg-import/beleg-import.mjs watch ~/BelegChat-Eingang
+# Watch auf Standard-Ordner (IMPORT_WATCH_DIR, {jahr} → aktuelles Jahr)
+node scripts/beleg-import/beleg-import.mjs watch
+
+# Watch auf beliebigen Ordner / Optionen
+node scripts/beleg-import/beleg-import.mjs watch ~/BelegChat-Eingang --move
+node scripts/beleg-import/beleg-import.mjs watch --baseline
 ```
+
+**Watch-Modi:**
+
+| Modus | Verhalten |
+|-------|-----------|
+| **Keep** (Standard) | Dateien bleiben unangetastet liegen — gedacht für die StB-Ablage in iCloud. Fortschritt in `.beleg-import-state.json` im Ordner; Duplikate/Fehler werden vermerkt, Fehler erst bei Dateiänderung erneut versucht |
+| `--move` | klassischer Hot-Folder: Erfolg → `importiert/`, Fehler → `fehler/` + `.err.txt` |
+| `--baseline` | vorhandene PDFs nur als „gesehen" markieren (kein Import) — danach werden nur **neu** hinzukommende Dateien importiert |
+
+iCloud-Besonderheiten: `.icloud`-Platzhalter werden per `brctl download` angestoßen; eine Datei wird erst importiert, wenn ihre Größe über zwei Scans (≈5 s) stabil ist.
 
 Konfiguration in `belegchat/.env.local` (nie committen):
 
@@ -44,6 +58,7 @@ Konfiguration in `belegchat/.env.local` (nie committen):
 IMPORT_API_TOKEN=…      # muss identisch in der n8n-Instanz gesetzt sein
 IMPORT_WEBHOOK_URL=https://n8n.srv1098810.hstgr.cloud/webhook/belegchat-import-pdf
 IMPORT_THREEMA_ID=BUMFMZ39
+IMPORT_WATCH_DIR=/Users/kunkel/Library/Mobile Documents/com~apple~CloudDocs/Papierlos/Steuerberater/Belege/StB Belege {jahr}
 ```
 
 Limits: max. 15 MB pro PDF, nur `%PDF-`-Dateien; Edge validiert zusätzlich per pdf-lib.
