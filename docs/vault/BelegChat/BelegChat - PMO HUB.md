@@ -68,7 +68,17 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 - [x] 12 DB-Tests grün (Duplikat, Hash-Format, Update-/Delete-Sperren)
 - [x] Live-n8n per API aktualisiert (Editor-Save scheiterte an Session; `N8N_API_KEY` jetzt in `n8n-workflows/.env`)
 - [x] **E2E-Testbeleg `01-2026-0005`** (2-seitig): `archived_at` = echte Upload-Zeitpunkte, 2× `seite_archiviert` im Audit-Log
-- [ ] **Offen:** 3 PRs mergen, dann BER-92 → Done
+- [x] 3 PRs gemerged, BER-92 → **Done**
+
+## Erledigt 2026-07-11 (BER-95 — Früher Push)
+
+Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integritätsprüfung statt nach Storage-Upload + DB-Write).
+
+- [x] Edge v17: Magic-Byte-Check JPEG/PNG in `decrypt-blob` (+ `detectedMime`)
+- [x] RPC `append_pending_seite`: atomarer Seiten-Append, `seite_nr` serverseitig — Race bei schnellen Folgefotos eliminiert
+- [x] n8n: Push nach `Blob entschlüsseln` („Seite N erhalten…"), neuer Fehlerpfad „Seite-Fehler melden" (Korrektur-Push)
+- [x] Live-Instanz per API aktualisiert + verifiziert
+- [ ] **Offen:** E2E-Test (Mehrseiten-Beleg, gefühlte Latenz), PRs threema-decrypt#3 + n8n-workflows#12 mergen
 
 ## Post-Alpha (P2)
 
