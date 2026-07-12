@@ -98,6 +98,15 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] **Deployed:** https://app.belegchat.de (Vercel-Projekt `belegchat`, Auto-Deploy von `main`; belegchat.de bleibt bei `belegchat-landing`)
 - [x] **Passkey-E2E bestanden** (2026-07-12): Registrierung + Login auf app.belegchat.de, Belegliste mandantenisoliert — **Phase 3 abgeschlossen**
 
+## Erledigt 2026-07-12 (Phase 4 — BER-96 DATEV-Export)
+
+- [x] EXTF-Buchungsstapel (700/FV9, 120 Spalten, Latin-1) — Layout nach produktiver ERPNext-DATEV-Referenz
+- [x] `/export` im Dashboard: Zeitraum → CSV-Download, Belege `geprueft → exportiert` + Audit, Re-Download deterministisch
+- [x] Migration `phase4_datev_export`: firmen-DATEV-Stammdaten, Grants/RLS `datev_exporte`
+- [x] Tests grün: Export `EXTF_Buchungsstapel_2026_M07.csv` (3 Belege, 46,60 €), Doppel-Export 404, Isolation 404, Re-Download identisch
+- [x] BER-91 (RLS) als bereits-erledigt geschlossen (war Teil von BER-92)
+- [ ] **Offen:** Berater-/Mandantennummer vom StB in `firmen` · finale Abnahme = realer DATEV-Import
+
 ## Post-Alpha (P2)
 
 **Implementierungsplan:** [[Research/POST-ALPHA-Implementierungsplan]] · Claude Code: `belegchat/docs/POST-ALPHA-PLAN.md`

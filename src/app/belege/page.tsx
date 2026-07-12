@@ -35,7 +35,15 @@ export default async function BelegePage() {
             {offen} zur Freigabe
           </p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/export"
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            DATEV-Export
+          </Link>
+          <LogoutButton />
+        </div>
       </div>
 
       <Card>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
-/** Schützt das Dashboard: /belege* nur mit gültiger Session. */
+/** Schützt das Dashboard: /belege* und /export nur mit gültiger Session. */
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = token ? await verifySessionToken(token) : null;
@@ -14,5 +14,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/belege/:path*", "/belege"],
+  matcher: ["/belege/:path*", "/belege", "/export"],
 };
