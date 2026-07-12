@@ -90,6 +90,13 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] `IMPORT_API_TOKEN` serverseitig gesetzt (Marcus: docker compose up -d + environment-Passthrough)
 - [x] **E2E grün:** Test-PDF → Beleg `01-2026-0008` (batch, SKR04 6930, PDF-Original + Audit) · Duplikat → 409 via Edge-Pre-Check (spart Storage/OCR)
 
+## In Arbeit 2026-07-11 (Phase 3 — BER-93 Dashboard)
+
+- [x] Migration `phase3_dashboard_auth` (20260711135520): `mandant_credentials`, `registrierungs_codes`, Freigabe-Audit-Aktionen, Rolle `dashboard_service` + RLS ([[Decisions/ADR-05 Dashboard-Zugriffsmodell]])
+- [x] Next.js: Login/Registrierung (Passkey, WebAuthn v13), Belegliste, Detail mit Audit-Trail, Freigabe-UI mit SKR04-Korrektur, Middleware
+- [x] Tests grün: Isolation (38 vs 4, Kreuzzugriff 404), Freigabe + Audit, Festschreibung blockt nach `geprueft`, Production-Build ok
+- [ ] **Offen:** Passkey-E2E durch Marcus (`/register`, Code liegt vor) · Vercel-Deploy (Envs, RP-ID)
+
 ## Post-Alpha (P2)
 
 **Implementierungsplan:** [[Research/POST-ALPHA-Implementierungsplan]] · Claude Code: `belegchat/docs/POST-ALPHA-PLAN.md`
