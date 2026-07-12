@@ -145,10 +145,11 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 
 ## Phase 4 — Querschnitt
 
-- DATEV-Export (eigenes Issue nach Phase 3)
-- Landing Page BER-22
-- Secret-Rotation (`SICHERHEIT.md`)
-- E2E: Threema + Batch-PDF + Dashboard-Freigabe
+- [x] DATEV-Export — **BER-96** (EXTF 700/FV9, `/export` im Dashboard, `docs/DATEV.md`; systemseitig getestet 2026-07-12, finale Abnahme = realer Import beim StB)
+- [ ] Landing Page BER-22
+- [ ] Secret-Rotation (`SICHERHEIT.md`)
+- [ ] E2E: Threema + Batch-PDF + Dashboard-Freigabe
+- *(BER-91 RLS: bereits durch Phase 1/BER-92 erledigt — Done)*
 
 ---
 
