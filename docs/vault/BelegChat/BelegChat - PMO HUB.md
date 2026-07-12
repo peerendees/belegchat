@@ -95,7 +95,8 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] Migration `phase3_dashboard_auth` (20260711135520): `mandant_credentials`, `registrierungs_codes`, Freigabe-Audit-Aktionen, Rolle `dashboard_service` + RLS ([[Decisions/ADR-05 Dashboard-Zugriffsmodell]])
 - [x] Next.js: Login/Registrierung (Passkey, WebAuthn v13), Belegliste, Detail mit Audit-Trail, Freigabe-UI mit SKR04-Korrektur, Middleware
 - [x] Tests grün: Isolation (38 vs 4, Kreuzzugriff 404), Freigabe + Audit, Festschreibung blockt nach `geprueft`, Production-Build ok
-- [ ] **Offen:** Passkey-E2E durch Marcus (`/register`, Code liegt vor) · Vercel-Deploy (Envs, RP-ID)
+- [x] **Deployed:** https://app.belegchat.de (Vercel-Projekt `belegchat`, Auto-Deploy von `main`; belegchat.de bleibt bei `belegchat-landing`)
+- [ ] **Offen:** Passkey-E2E durch Marcus auf https://app.belegchat.de/register (Code liegt vor)
 
 ## Post-Alpha (P2)
 
