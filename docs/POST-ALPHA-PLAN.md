@@ -139,7 +139,7 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 - [ ] Passkey-Login für Test-Mandant `BUMFMZ39` — *API-seitig getestet (Optionen/Challenges); echte Passkey-Zeremonie: Nutzer-Test auf `/register` mit provisioniertem Code offen*
 - [x] Nur eigene Belege sichtbar (BUMFMZ39: 38, VDUZ9S7E: 4, Kreuzzugriff 404); Freigabe gesperrt durch Phase-1-Trigger (Update nach `geprueft` blockiert)
 
-**Deploy offen:** Vercel-Envs + `WEBAUTHN_RP_ID`/`ORIGIN` auf Produktions-Domain
+**Deployed:** https://app.belegchat.de — Vercel-Projekt `belegchat` (GitHub-Connect auf `main`), Envs gesetzt, Domain via Cloudflare-CNAME (DNS-only). Rest-DoD: Passkey-E2E durch Marcus auf der Live-Domain.
 
 ---
 
