@@ -30,8 +30,14 @@ export async function POST(req: NextRequest) {
       expectedChallenge: ctx.challenge,
       expectedOrigin: WEBAUTHN_ORIGIN,
       expectedRPID: RP_ID,
+      // Konsistent zur "preferred"-Policy in den Optionen: UV wird angefragt,
+      // aber nicht erzwungen. Sonst scheitern Passkey-Manager (z. B. NordPass),
+      // die das UV-Flag bei der Erstellung nicht setzen. iCloud/Face ID setzen
+      // es weiterhin — die tatsächliche Verifikation gatet ohnehin der Manager.
+      requireUserVerification: false,
     });
-  } catch {
+  } catch (e) {
+    console.error("register/verify verifyRegistrationResponse:", e instanceof Error ? e.message : String(e));
     return NextResponse.json({ error: "Passkey-Prüfung fehlgeschlagen" }, { status: 400 });
   }
   if (!verification.verified || !verification.registrationInfo) {
