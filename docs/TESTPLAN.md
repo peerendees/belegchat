@@ -34,11 +34,21 @@
 
 **Erfolgskriterium:** Erfassungsquote (wie viele PDFs sauber durchlaufen) + Kontierungstrefferquote sind bekannt; daraus abgeleitete Prompt-Verbesserungen.
 
+## Phase B2 — 2024-Nacherfassung (sobald Belege vollständig)
+
+2024 ist noch offen beim StB → hier ist BelegChat der **Ersterfassungsweg** (kein Benchmark):
+
+1. Vorhandene 2024er-PDFs in `Belege/Input/` legen (Watch läuft); Papierbelege per Threema-Foto
+2. Nachzügler jederzeit nachreichen — der Duplikat-Schutz macht Mehrfach-Einwurf ungefährlich
+3. Freigeben im Dashboard, dann `/export` mit **Jahr 2024** → Stapel an StB
+4. Belegnummern tragen das Erfassungsjahr (`01-2026-…`), das Belegdatum steuert Jahreszuordnung und Ablage (`StB Belege 2024`) — für DATEV zählt das Belegdatum
+
 ## Phase C — Echtbetrieb + Threema-Abschlusstest (laufend)
 
 1. **Threema-E2E** (letzter offener Baustein des Gesamt-E2E): 1 Mehrseiten-Beleg als Foto
    via Threema (`BUMFMZ39`) senden → „Seite 1 erhalten…" → `Fertig` → im Dashboard prüfen
 2. Ab sofort: neue Belege per Threema-Foto oder `Belege/Input/`
+   (geplant: Proton-Mail-Scan → Input, BER-97 — E-Mail-Rechnungen landen dann automatisch im selben Fluss)
 3. **Monatsrhythmus:** Monatsanfang → Vormonat freigeben → `/export` → CSV an StB
 
 ## Statusmatrix Gesamt-E2E
