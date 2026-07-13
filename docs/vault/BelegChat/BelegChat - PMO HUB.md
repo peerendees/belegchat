@@ -107,6 +107,15 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 - [x] BER-91 (RLS) als bereits-erledigt geschlossen (war Teil von BER-92)
 - [ ] **Offen:** Berater-/Mandantennummer vom StB in `firmen` · finale Abnahme = realer DATEV-Import
 
+## Erledigt 2026-07-12 (Phase 4 — Abschluss)
+
+- [x] Landing: Anmelden-Link → app.belegchat.de (belegchat-landing#1)
+- [x] Secret-Rotation-Audit: `n8n-workflows` privat ✓, Alt-Secrets nur noch in privater Historie, RLS überall ✓; 3 manuelle Verifikationen offen (Threema-/Supabase-/Mistral-Secrets — SICHERHEIT.md Abschnitt 0)
+- [x] Gesamt-E2E Batch→Freigabe→Export grün (`01-2026-0039`); Threema-Wiederholung in [[../../TESTPLAN|Testplan]] Phase C
+- [x] Testplan Echtstand: `docs/TESTPLAN.md` (A: 2026 freigeben+exportieren · B: 2025 als Kontierungs-Benchmark · C: Echtbetrieb + Threema-Test)
+
+**Post-Alpha-Plan damit vollständig abgearbeitet** — offen nur externe Schritte (StB-Nummern, DATEV-Abnahme, Threema-Foto, Secret-Verifikationen).
+
 ## Post-Alpha (P2)
 
 **Implementierungsplan:** [[Research/POST-ALPHA-Implementierungsplan]] · Claude Code: `belegchat/docs/POST-ALPHA-PLAN.md`
