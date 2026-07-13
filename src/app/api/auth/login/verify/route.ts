@@ -46,8 +46,12 @@ export async function POST(req: NextRequest) {
         counter: Number(cred.counter),
         transports: cred.transports as AuthenticatorTransport[],
       },
+      // Konsistent zur "preferred"-Policy (siehe register/verify): UV nicht
+      // erzwingen, damit Passkey-Manager ohne gesetztes UV-Flag funktionieren.
+      requireUserVerification: false,
     });
-  } catch {
+  } catch (e) {
+    console.error("login/verify verifyAuthenticationResponse:", e instanceof Error ? e.message : String(e));
     return NextResponse.json({ error: "Passkey-Prüfung fehlgeschlagen" }, { status: 401 });
   }
   if (!verification.verified) {
