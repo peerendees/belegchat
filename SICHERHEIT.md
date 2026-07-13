@@ -5,6 +5,24 @@
 
 ---
 
+## 0. Status Secret-Rotation (geprüft 2026-07-12, Phase 4 / BER-96-Session)
+
+| Punkt | Status |
+|-------|--------|
+| `n8n-workflows` privat | ✅ verifiziert (`visibility: private`) |
+| Alt-Secrets in Git-Historie | ⚠️ weiterhin vorhanden (49/12/5 Commits) — durch privates Repo entschärft; `git filter-repo` optional (Achtung: Force-Push bricht lokale Klone, es existieren mehrere Arbeitskopien) |
+| Threema API-Secrets (*BERENT1/2*) | ❓ **manuell verifizieren:** wurden sie nach dem Leak neu erzeugt? (Gateway-Konsole) |
+| Threema Private Key | ⚠️ nicht rotierbar — bei Bedarf neue Gateway-ID; Risiko begrenzt, solange Repo privat bleibt |
+| Supabase Service-/Anon-Key | ❓ **manuell verifizieren:** Dashboard → Settings → API (bei Rotation: n8n-Server-`.env` + Edge Secrets nachziehen) |
+| Mistral-API-Key | ❓ manuell prüfen/rotieren (Mistral-Konsole) |
+| RLS | ✅ aktiv auf allen Belegtabellen; Dashboard läuft **ohne** Service-Key über Rolle `dashboard_service` (ADR-05) |
+| Neue Secrets seit Phase 2/3 | `IMPORT_API_TOKEN` (n8n-`.env` + `belegchat/.env.local`) · `DASHBOARD_DB_URL`, `AUTH_SESSION_SECRET` (`.env.local` + Vercel) · `N8N_API_KEY` (`n8n-workflows/.env`) — alle gitignored, Vercel-Env verschlüsselt |
+| App-Audit | `npm audit`: keine kritischen/hohen Findings (Stand 2026-07-12) |
+
+**Abschnitte 1–4 unten beschreiben die ursprüngliche Remediation (März/Juli 2026) und bleiben als Referenz stehen; Punkt „App-Funktionalität" aus Abschnitt 4 ist durch Phase 3 (Dashboard) überholt.**
+
+---
+
 ## 1. SOFORT: Kompromittierte Secrets rotieren
 
 Folgende Secrets lagen im Klartext im n8n-Workflow-Export und wurden nach

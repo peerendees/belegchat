@@ -146,9 +146,10 @@ sudo /Users/Shared/Projekte/Entwicklung/projekte/belegchat/scripts/fix-shared-ow
 ## Phase 4 — Querschnitt
 
 - [x] DATEV-Export — **BER-96** (EXTF 700/FV9, `/export` im Dashboard, `docs/DATEV.md`; systemseitig getestet 2026-07-12, finale Abnahme = realer Import beim StB)
-- [ ] Landing Page BER-22
-- [ ] Secret-Rotation (`SICHERHEIT.md`)
-- [ ] E2E: Threema + Batch-PDF + Dashboard-Freigabe
+- [x] Landing Page BER-22 — Anmelden-Link → app.belegchat.de live; inhaltlicher Feinschliff (Texte/Preise) bleibt in BER-22 offen
+- [x] Secret-Rotation — Status-Audit in `SICHERHEIT.md` Abschnitt 0 (Repo privat ✓, RLS ✓; 3 manuelle Dashboard-Verifikationen bei Marcus: Threema-Secrets, Supabase-Keys, Mistral-Key)
+- [x] E2E: Batch-PDF → Freigabe → DATEV-Export in einem Durchlauf grün (`01-2026-0039`, 2026-07-12); Threema-Wiederholung = Testplan Phase C.1
+- **Testplan Echtstand 2025/2026:** [`docs/TESTPLAN.md`](TESTPLAN.md)
 - *(BER-91 RLS: bereits durch Phase 1/BER-92 erledigt — Done)*
 
 ---
