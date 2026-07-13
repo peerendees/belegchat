@@ -63,6 +63,23 @@ IMPORT_ERROR_DIR=…/Papierlos/Steuerberater/Belege/Fehler Import
 
 Limits: max. 15 MB pro PDF, nur `%PDF-`-Dateien; Edge validiert zusätzlich per pdf-lib.
 
+## Proton-Mail-Scan (BER-97)
+
+E-Mail-Rechnungen aus Proton landen halbautomatisch im selben Fluss:
+
+```bash
+# PDF-Anhänge seit Datum in den Sichtungsordner ziehen (Proton Bridge muss laufen)
+node scripts/beleg-import/mail-scan.mjs --seit 2024-01-01
+# Optionen: --ordner INBOX · --dry (nur auflisten) · --direkt (ohne Sichtung in den Input)
+```
+
+Funde landen in `Belege/Input Mail-Scan/` (bewusst mit Sichtungsschritt — Postfächer
+enthalten auch Nicht-Belege); echte Belege von dort nach `Belege/Input/` schieben.
+Verarbeitete Mail-UIDs stehen in `Belege/.mail-scan-state.json` — erneute Läufe ziehen
+nur Neues, und der Hash-Duplikatschutz der Pipeline sichert zusätzlich ab.
+Konfiguration: `PROTON_IMAP_*` in `.env.local` (Bridge, `127.0.0.1:1143`, STARTTLS,
+lokales Bridge-Zertifikat).
+
 ## Server-Voraussetzung (einmalig)
 
 In der `.env` der n8n-Instanz (`srv1098810.hstgr.cloud`) muss stehen:
