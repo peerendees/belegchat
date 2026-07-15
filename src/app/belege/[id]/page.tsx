@@ -98,6 +98,19 @@ export default async function BelegDetailPage({
                   <dd>{(beleg.bewirtung_anlass as string) || "—"}</dd>
                   <dt className="text-muted-foreground">Bewirtung – Teilnehmer</dt>
                   <dd>{(beleg.bewirtung_teilnehmer as string) || "—"}</dd>
+                  {beleg.bewirtung_anlass && beleg.bewirtung_teilnehmer ? (
+                    <>
+                      <dt className="text-muted-foreground">Deckblatt</dt>
+                      <dd>
+                        <a
+                          href={`/api/belege/${id}/deckblatt`}
+                          className="underline underline-offset-2"
+                        >
+                          Bewirtungsbeleg als PDF (Deckblatt + Original)
+                        </a>
+                      </dd>
+                    </>
+                  ) : null}
                 </>
               ) : null}
               <dt className="text-muted-foreground">GoBD-Hash</dt>
