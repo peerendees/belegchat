@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { withMandant, sql } from "@/lib/db";
 import { euro, datum, datumZeit, STATUS_LABELS } from "@/lib/format";
 import { FreigabeForm } from "@/components/freigabe-form";
+import { LoeschenButton } from "@/components/loeschen-button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -91,6 +92,14 @@ export default async function BelegDetailPage({
               </dd>
               <dt className="text-muted-foreground">Eingangskanal</dt>
               <dd>{beleg.eingangskanal as string}</dd>
+              {beleg.beleg_typ === "bewirtung" ? (
+                <>
+                  <dt className="text-muted-foreground">Bewirtung – Anlass</dt>
+                  <dd>{(beleg.bewirtung_anlass as string) || "—"}</dd>
+                  <dt className="text-muted-foreground">Bewirtung – Teilnehmer</dt>
+                  <dd>{(beleg.bewirtung_teilnehmer as string) || "—"}</dd>
+                </>
+              ) : null}
               <dt className="text-muted-foreground">GoBD-Hash</dt>
               <dd className="truncate font-mono text-xs">{(beleg.gobd_hash as string) || "—"}</dd>
               {beleg.geprueft_am ? (
@@ -105,14 +114,22 @@ export default async function BelegDetailPage({
 
         <div className="space-y-6">
           {offen ? (
-            <FreigabeForm
-              belegId={id}
-              aktuellesSachkonto={beleg.sachkonto as string}
-              konten={konten.map((k) => ({
-                konto_nr: k.konto_nr as string,
-                bezeichnung: k.bezeichnung as string,
-              }))}
-            />
+            <div className="space-y-3">
+              <FreigabeForm
+                belegId={id}
+                aktuellesSachkonto={beleg.sachkonto as string}
+                konten={konten.map((k) => ({
+                  konto_nr: k.konto_nr as string,
+                  bezeichnung: k.bezeichnung as string,
+                }))}
+                istBewirtung={beleg.beleg_typ === "bewirtung"}
+                anlassInitial={(beleg.bewirtung_anlass as string) ?? ""}
+                teilnehmerInitial={(beleg.bewirtung_teilnehmer as string) ?? ""}
+              />
+              <div className="flex justify-end">
+                <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />
+              </div>
+            </div>
           ) : (
             <Card>
               <CardContent className="pt-6 text-sm text-muted-foreground">

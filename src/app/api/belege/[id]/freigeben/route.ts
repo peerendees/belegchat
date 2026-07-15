@@ -22,15 +22,33 @@ export async function POST(
   }
   const body = await req.json().catch(() => ({}));
   const neuesSachkonto = body.sachkonto ? String(body.sachkonto).trim() : null;
+  const anlass = body.bewirtung_anlass != null ? String(body.bewirtung_anlass).trim() : null;
+  const teilnehmer = body.bewirtung_teilnehmer != null ? String(body.bewirtung_teilnehmer).trim() : null;
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
-        SELECT id, beleg_nr, status, sachkonto FROM belege WHERE id = ${id} LIMIT 1`;
+        SELECT id, beleg_nr, status, sachkonto, beleg_typ FROM belege WHERE id = ${id} LIMIT 1`;
       if (belege.length === 0) return { status: 404 as const };
       const beleg = belege[0];
       if (!["vorschlag", "klaerungsbedarf"].includes(beleg.status as string)) {
         return { status: 409 as const, fehler: `Beleg ist bereits ${beleg.status}` };
+      }
+
+      // Bewirtung: Anlass + Teilnehmer sind Pflicht (§ 4 Abs. 5 Nr. 2 EStG)
+      if (beleg.beleg_typ === "bewirtung") {
+        if (anlass !== null || teilnehmer !== null) {
+          await tx`
+            UPDATE belege
+               SET bewirtung_anlass = COALESCE(${anlass}, bewirtung_anlass),
+                   bewirtung_teilnehmer = COALESCE(${teilnehmer}, bewirtung_teilnehmer)
+             WHERE id = ${id}`;
+        }
+        const geprueft = await tx`
+          SELECT bewirtung_anlass, bewirtung_teilnehmer FROM belege WHERE id = ${id}`;
+        if (!geprueft[0].bewirtung_anlass || !geprueft[0].bewirtung_teilnehmer) {
+          return { status: 422 as const, fehler: "Bewirtung: Anlass und Teilnehmer sind Pflichtangaben" };
+        }
       }
 
       if (neuesSachkonto && neuesSachkonto !== beleg.sachkonto) {

@@ -11,13 +11,21 @@ export function FreigabeForm({
   belegId,
   aktuellesSachkonto,
   konten,
+  istBewirtung = false,
+  anlassInitial = "",
+  teilnehmerInitial = "",
 }: {
   belegId: string;
   aktuellesSachkonto: string;
   konten: Konto[];
+  istBewirtung?: boolean;
+  anlassInitial?: string;
+  teilnehmerInitial?: string;
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
+  const [anlass, setAnlass] = useState(anlassInitial);
+  const [teilnehmer, setTeilnehmer] = useState(teilnehmerInitial);
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -25,12 +33,16 @@ export function FreigabeForm({
     setFehler(null);
     setLaeuft(true);
     try {
+      const payload: Record<string, string> = {};
+      if (sachkonto !== aktuellesSachkonto) payload.sachkonto = sachkonto;
+      if (istBewirtung) {
+        payload.bewirtung_anlass = anlass;
+        payload.bewirtung_teilnehmer = teilnehmer;
+      }
       const res = await fetch(`/api/belege/${belegId}/freigeben`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          sachkonto !== aktuellesSachkonto ? { sachkonto } : {},
-        ),
+        body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || "Freigabe fehlgeschlagen");
@@ -44,6 +56,37 @@ export function FreigabeForm({
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
+      {istBewirtung && (
+        <div className="space-y-3 rounded-md bg-amber-50 p-3">
+          <p className="text-sm font-medium text-amber-900">
+            Bewirtungsbeleg — Pflichtangaben (§ 4 Abs. 5 Nr. 2 EStG)
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor="anlass">Geschäftlicher Anlass</Label>
+            <input
+              id="anlass"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={anlass}
+              onChange={(e) => setAnlass(e.target.value)}
+              placeholder="z. B. Projektbesprechung Kunde X"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="teilnehmer">Bewirtete Personen</Label>
+            <input
+              id="teilnehmer"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={teilnehmer}
+              onChange={(e) => setTeilnehmer(e.target.value)}
+              placeholder="Namen, kommagetrennt (inkl. eigener Person)"
+            />
+          </div>
+          <p className="text-xs text-amber-800">
+            Ohne beide Angaben ist die Bewirtung steuerlich nicht abziehbar — bitte
+            jetzt ausfüllen, solange die Erinnerung frisch ist.
+          </p>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="sachkonto">Sachkonto (SKR04)</Label>
         <select
