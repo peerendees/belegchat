@@ -24,6 +24,8 @@ export async function POST(
   const neuesSachkonto = body.sachkonto ? String(body.sachkonto).trim() : null;
   const anlass = body.bewirtung_anlass != null ? String(body.bewirtung_anlass).trim() : null;
   const teilnehmer = body.bewirtung_teilnehmer != null ? String(body.bewirtung_teilnehmer).trim() : null;
+  const trinkgeldRoh = body.bewirtung_trinkgeld != null ? String(body.bewirtung_trinkgeld).replace(",", ".").trim() : null;
+  const trinkgeld = trinkgeldRoh && !Number.isNaN(Number(trinkgeldRoh)) ? Number(trinkgeldRoh) : null;
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
@@ -37,11 +39,12 @@ export async function POST(
 
       // Bewirtung: Anlass + Teilnehmer sind Pflicht (§ 4 Abs. 5 Nr. 2 EStG)
       if (beleg.beleg_typ === "bewirtung") {
-        if (anlass !== null || teilnehmer !== null) {
+        if (anlass !== null || teilnehmer !== null || trinkgeld !== null) {
           await tx`
             UPDATE belege
                SET bewirtung_anlass = COALESCE(${anlass}, bewirtung_anlass),
-                   bewirtung_teilnehmer = COALESCE(${teilnehmer}, bewirtung_teilnehmer)
+                   bewirtung_teilnehmer = COALESCE(${teilnehmer}, bewirtung_teilnehmer),
+                   bewirtung_trinkgeld = COALESCE(${trinkgeld}, bewirtung_trinkgeld)
              WHERE id = ${id}`;
         }
         const geprueft = await tx`

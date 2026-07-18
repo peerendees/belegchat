@@ -32,7 +32,7 @@ export async function GET(
   const daten = await withMandant(session.mandantId, async (tx) => {
     const belege = await tx`
       SELECT beleg_nr, beleg_typ, beleg_datum, betrag_brutto, mwst_betrag, mwst_satz,
-             sachkonto, verwendungszweck, bewirtung_anlass, bewirtung_teilnehmer
+             sachkonto, verwendungszweck, bewirtung_anlass, bewirtung_teilnehmer, bewirtung_trinkgeld
         FROM belege WHERE id = ${id} LIMIT 1`;
     if (belege.length === 0) return null;
     const seiten = await tx`
@@ -69,6 +69,8 @@ export async function GET(
         mwst: `${euro(beleg.mwst_betrag)}${beleg.mwst_satz ? ` (${beleg.mwst_satz} %)` : ""}`,
         anlass: beleg.bewirtung_anlass,
         teilnehmer: beleg.bewirtung_teilnehmer,
+        trinkgeld: beleg.bewirtung_trinkgeld != null ? euro(beleg.bewirtung_trinkgeld) : "—",
+        gesamt: euro(Number(beleg.betrag_brutto ?? 0) + Number(beleg.bewirtung_trinkgeld ?? 0)),
         sachkonto: beleg.sachkonto,
         erstellt: datum(new Date().toISOString()),
       },

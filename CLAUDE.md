@@ -1,6 +1,6 @@
 # CLAUDE.md — BelegChat
 
-> Lies diese Datei zu Beginn jeder Session. Danach: `docs/POST-ALPHA-PLAN.md` und ggf. `docs/ALPHA-HANDOFF.md`.
+> Lies diese Datei zu Beginn jeder Session. Danach: `docs/UEBERGABE.md` (Systemstand + offene Punkte) und `docs/TESTPLAN.md`.
 
 ---
 

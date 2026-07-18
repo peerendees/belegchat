@@ -24,7 +24,7 @@ export async function GET(
       SELECT * FROM datev_exporte WHERE id = ${id} LIMIT 1`;
     if (exporte.length === 0) return null;
     const belege = await tx`
-      SELECT beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck
+      SELECT beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck, bewirtung_trinkgeld
         FROM belege WHERE datev_export_id = ${id}
        ORDER BY beleg_datum, beleg_nr`;
     return { exp: exporte[0], belege };

@@ -14,6 +14,7 @@ export function FreigabeForm({
   istBewirtung = false,
   anlassInitial = "",
   teilnehmerInitial = "",
+  trinkgeldInitial = "",
 }: {
   belegId: string;
   aktuellesSachkonto: string;
@@ -21,11 +22,13 @@ export function FreigabeForm({
   istBewirtung?: boolean;
   anlassInitial?: string;
   teilnehmerInitial?: string;
+  trinkgeldInitial?: string;
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
   const [anlass, setAnlass] = useState(anlassInitial);
   const [teilnehmer, setTeilnehmer] = useState(teilnehmerInitial);
+  const [trinkgeld, setTrinkgeld] = useState(trinkgeldInitial);
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -38,6 +41,7 @@ export function FreigabeForm({
       if (istBewirtung) {
         payload.bewirtung_anlass = anlass;
         payload.bewirtung_teilnehmer = teilnehmer;
+        if (trinkgeld.trim()) payload.bewirtung_trinkgeld = trinkgeld;
       }
       const res = await fetch(`/api/belege/${belegId}/freigeben`, {
         method: "POST",
@@ -79,6 +83,17 @@ export function FreigabeForm({
               value={teilnehmer}
               onChange={(e) => setTeilnehmer(e.target.value)}
               placeholder="Namen, kommagetrennt (inkl. eigener Person)"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="trinkgeld">Trinkgeld in € (optional)</Label>
+            <input
+              id="trinkgeld"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={trinkgeld}
+              onChange={(e) => setTrinkgeld(e.target.value)}
+              placeholder="z. B. 5,10 — falls nicht auf der Rechnung"
+              inputMode="decimal"
             />
           </div>
           <p className="text-xs text-amber-800">

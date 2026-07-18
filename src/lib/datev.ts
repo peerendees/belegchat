@@ -12,6 +12,7 @@ export type DatevBeleg = {
   betrag_brutto: string | number;
   sachkonto: string;
   verwendungszweck: string | null;
+  bewirtung_trinkgeld?: string | number | null;
 };
 
 export type DatevMeta = {
@@ -137,7 +138,11 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   row[7] = meta.gegenkonto;                // Gegenkonto (ohne BU)
   row[9] = ttmm(b.beleg_datum);            // Belegdatum TTMM
   row[10] = q(b.beleg_nr.slice(0, 36));    // Belegfeld 1
-  row[13] = q((b.verwendungszweck || b.beleg_nr).slice(0, 60)); // Buchungstext
+  let text = b.verwendungszweck || b.beleg_nr;
+  if (b.beleg_typ === "bewirtung" && b.bewirtung_trinkgeld != null && Number(b.bewirtung_trinkgeld) > 0) {
+    text += ` zzgl. Trinkgeld ${betrag(b.bewirtung_trinkgeld)}`;
+  }
+  row[13] = q(text.slice(0, 60)); // Buchungstext
   return row.join(";");
 }
 
