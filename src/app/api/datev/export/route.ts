@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
-        SELECT id, beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck
+        SELECT id, beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck, bewirtung_trinkgeld
           FROM belege
          WHERE status = 'geprueft'
            AND beleg_datum BETWEEN ${von} AND ${bis}

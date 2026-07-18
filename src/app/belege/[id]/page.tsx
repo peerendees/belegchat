@@ -98,6 +98,8 @@ export default async function BelegDetailPage({
                   <dd>{(beleg.bewirtung_anlass as string) || "—"}</dd>
                   <dt className="text-muted-foreground">Bewirtung – Teilnehmer</dt>
                   <dd>{(beleg.bewirtung_teilnehmer as string) || "—"}</dd>
+                  <dt className="text-muted-foreground">Bewirtung – Trinkgeld</dt>
+                  <dd>{beleg.bewirtung_trinkgeld != null ? euro(beleg.bewirtung_trinkgeld) : "—"}</dd>
                   {beleg.bewirtung_anlass && beleg.bewirtung_teilnehmer ? (
                     <>
                       <dt className="text-muted-foreground">Deckblatt</dt>
@@ -138,6 +140,7 @@ export default async function BelegDetailPage({
                 istBewirtung={beleg.beleg_typ === "bewirtung"}
                 anlassInitial={(beleg.bewirtung_anlass as string) ?? ""}
                 teilnehmerInitial={(beleg.bewirtung_teilnehmer as string) ?? ""}
+                trinkgeldInitial={beleg.bewirtung_trinkgeld != null ? String(beleg.bewirtung_trinkgeld) : ""}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />
