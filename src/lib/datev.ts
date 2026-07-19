@@ -13,6 +13,7 @@ export type DatevBeleg = {
   sachkonto: string;
   verwendungszweck: string | null;
   trinkgeld?: string | number | null;
+  gebucht_brutto?: string | number | null;
   termin_grund?: string | null;
   termin_ort?: string | null;
   termin_kunde?: string | null;
@@ -134,7 +135,8 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   const habenTypen = ["gutschrift", "ausgangsrechnung"];
   const sh = habenTypen.includes(b.beleg_typ ?? "") ? "H" : "S";
   const row: string[] = new Array(TRANSACTION_COLUMNS.length).fill("");
-  row[0] = betrag(b.betrag_brutto);       // Umsatz (immer positiv)
+  // Gebuchter Betrag = Teilbetrag falls gesetzt, sonst voller Dokumentbetrag (BER-108).
+  row[0] = betrag(b.gebucht_brutto ?? b.betrag_brutto); // Umsatz (immer positiv)
   row[1] = q(sh);                          // Soll/Haben
   row[2] = q("EUR");                       // WKZ
   row[6] = b.sachkonto;                    // Konto
@@ -152,6 +154,9 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   }
   if (b.trinkgeld != null && Number(b.trinkgeld) > 0) {
     text += ` zzgl. Trinkgeld ${betrag(b.trinkgeld)}`;
+  }
+  if (b.gebucht_brutto != null) {
+    text += " (Teilbetrag)";
   }
   row[13] = q(text.slice(0, 60)); // Buchungstext (DATEV: max. 60 Zeichen)
   return row.join(";");
