@@ -19,6 +19,12 @@ export function FreigabeForm({
   grundInitial = "",
   ortInitial = "",
   kundeInitial = "",
+  erlaubtTeilbetrag = false,
+  betragBrutto = 0,
+  mwstSatz = 0,
+  teilbetragBasisInitial = "",
+  teilbetragWertInitial = "",
+  teilbetragGrundInitial = "",
 }: {
   belegId: string;
   aktuellesSachkonto: string;
@@ -31,6 +37,12 @@ export function FreigabeForm({
   grundInitial?: string;
   ortInitial?: string;
   kundeInitial?: string;
+  erlaubtTeilbetrag?: boolean;
+  betragBrutto?: number;
+  mwstSatz?: number;
+  teilbetragBasisInitial?: string;
+  teilbetragWertInitial?: string;
+  teilbetragGrundInitial?: string;
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
@@ -40,8 +52,37 @@ export function FreigabeForm({
   const [grund, setGrund] = useState(grundInitial);
   const [ort, setOrt] = useState(ortInitial);
   const [kunde, setKunde] = useState(kundeInitial);
+  const [teilbetragAktiv, setTeilbetragAktiv] = useState(!!teilbetragWertInitial);
+  const [teilbetragBasis, setTeilbetragBasis] = useState(teilbetragBasisInitial || "brutto");
+  const [teilbetragWert, setTeilbetragWert] = useState(teilbetragWertInitial);
+  const [teilbetragGrund, setTeilbetragGrund] = useState(teilbetragGrundInitial);
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
+
+  // Live-Vorschau des gebuchten Splits aus Eingabe + MwSt-Satz (BER-108).
+  function teilbetragVorschau(): string {
+    const roh = Number(teilbetragWert.replace(",", "."));
+    if (!teilbetragWert.trim() || Number.isNaN(roh) || roh <= 0) return "Betrag eingeben …";
+    const faktor = 1 + (mwstSatz || 0) / 100;
+    const runde = (n: number) => Math.round(n * 100) / 100;
+    let b: number;
+    let n: number;
+    if (teilbetragBasis === "brutto") {
+      b = roh;
+      n = faktor > 0 ? roh / faktor : roh;
+    } else {
+      n = roh;
+      b = roh * faktor;
+    }
+    b = runde(b);
+    n = runde(n);
+    const m = runde(b - n);
+    const warn =
+      betragBrutto > 0 && b > betragBrutto + 0.005
+        ? ` — ⚠ übersteigt Rechnungsbetrag ${betragBrutto.toFixed(2)} €`
+        : "";
+    return `Gebucht: brutto ${b.toFixed(2)} € · netto ${n.toFixed(2)} € · MwSt ${m.toFixed(2)} € (${mwstSatz || 0} %)${warn}`;
+  }
 
   async function freigeben() {
     setFehler(null);
@@ -60,6 +101,11 @@ export function FreigabeForm({
       }
       if ((istBewirtung || istAuswaerts) && trinkgeld.trim()) {
         payload.trinkgeld = trinkgeld;
+      }
+      if (erlaubtTeilbetrag && teilbetragAktiv && teilbetragWert.trim()) {
+        payload.teilbetrag_basis = teilbetragBasis;
+        payload.teilbetrag_wert = teilbetragWert;
+        payload.teilbetrag_grund = teilbetragGrund;
       }
       const res = await fetch(`/api/belege/${belegId}/freigeben`, {
         method: "POST",
@@ -163,6 +209,54 @@ export function FreigabeForm({
             placeholder="z. B. 5,10 — falls nicht auf der Rechnung"
             inputMode="decimal"
           />
+        </div>
+      )}
+
+      {erlaubtTeilbetrag && (
+        <div className="space-y-2 rounded-md border p-3">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={teilbetragAktiv}
+              onChange={(e) => setTeilbetragAktiv(e.target.checked)}
+            />
+            Nur einen Teilbetrag buchen
+          </label>
+          {teilbetragAktiv && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <select
+                  aria-label="Teilbetrag-Basis"
+                  className="rounded-md border bg-transparent px-3 py-2 text-sm"
+                  value={teilbetragBasis}
+                  onChange={(e) => setTeilbetragBasis(e.target.value)}
+                >
+                  <option value="brutto">Brutto (inkl. MwSt)</option>
+                  <option value="netto">Netto</option>
+                </select>
+                <input
+                  aria-label="Teilbetrag in Euro"
+                  className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                  value={teilbetragWert}
+                  onChange={(e) => setTeilbetragWert(e.target.value)}
+                  placeholder="Betrag in €"
+                  inputMode="decimal"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">{teilbetragVorschau()}</p>
+              <input
+                aria-label="Grund der Teilbuchung"
+                className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                value={teilbetragGrund}
+                onChange={(e) => setTeilbetragGrund(e.target.value)}
+                placeholder="Grund (welche Positionen ausgeschlossen) — optional"
+              />
+              <p className="text-xs text-muted-foreground">
+                Das Originaldokument bleibt vollständig archiviert; nur der Teilbetrag
+                wird gebucht und exportiert.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

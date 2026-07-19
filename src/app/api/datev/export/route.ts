@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
         SELECT id, beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck,
-               trinkgeld, termin_grund, termin_ort, termin_kunde
+               trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto
           FROM belege
          WHERE status = 'geprueft'
            AND beleg_datum BETWEEN ${von} AND ${bis}
@@ -51,10 +51,11 @@ export async function POST(req: NextRequest) {
          FOR UPDATE`;
       if (belege.length === 0) return null;
 
+      // Summen mit dem gebuchten (Teil-)Betrag, sonst dem Dokumentbetrag (BER-108).
       const summen = await tx`
-        SELECT COALESCE(sum(betrag_brutto),0) AS brutto,
-               COALESCE(sum(betrag_netto),0) AS netto,
-               COALESCE(sum(mwst_betrag),0) AS mwst
+        SELECT COALESCE(sum(COALESCE(gebucht_brutto, betrag_brutto)),0) AS brutto,
+               COALESCE(sum(COALESCE(gebucht_netto, betrag_netto)),0) AS netto,
+               COALESCE(sum(COALESCE(gebucht_mwst, mwst_betrag)),0) AS mwst
           FROM belege
          WHERE status = 'geprueft' AND beleg_datum BETWEEN ${von} AND ${bis}`;
 

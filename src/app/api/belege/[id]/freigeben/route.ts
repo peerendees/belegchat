@@ -30,11 +30,22 @@ export async function POST(
   const terminGrund = body.termin_grund != null ? String(body.termin_grund).trim() : null;
   const terminOrt = body.termin_ort != null ? String(body.termin_ort).trim() : null;
   const terminKunde = body.termin_kunde != null ? String(body.termin_kunde).trim() : null;
+  // Teilbetrag: nur einen Teil der Rechnung buchen (brutto oder netto) — BER-108
+  const teilbetragBasis =
+    body.teilbetrag_basis === "brutto" || body.teilbetrag_basis === "netto"
+      ? (body.teilbetrag_basis as "brutto" | "netto")
+      : null;
+  const teilbetragRoh =
+    body.teilbetrag_wert != null ? String(body.teilbetrag_wert).replace(",", ".").trim() : null;
+  const teilbetragWert =
+    teilbetragRoh && !Number.isNaN(Number(teilbetragRoh)) ? Number(teilbetragRoh) : null;
+  const teilbetragGrund = body.teilbetrag_grund != null ? String(body.teilbetrag_grund).trim() : null;
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
-        SELECT id, beleg_nr, status, sachkonto, beleg_typ FROM belege WHERE id = ${id} LIMIT 1`;
+        SELECT id, beleg_nr, status, sachkonto, beleg_typ, betrag_brutto, mwst_satz
+          FROM belege WHERE id = ${id} LIMIT 1`;
       if (belege.length === 0) return { status: 404 as const };
       const beleg = belege[0];
       if (!["vorschlag", "klaerungsbedarf"].includes(beleg.status as string)) {
@@ -75,6 +86,43 @@ export async function POST(
         if (!geprueft[0].termin_grund) {
           return { status: 422 as const, fehler: "Auswärts-Beleg: Grund des Termins ist Pflichtangabe" };
         }
+      }
+
+      // Teilbetrag buchen (BER-108): nur ein Teil der Rechnung, brutto oder netto
+      // eingegeben; Split aus mwst_satz abgeleitet. betrag_* bleibt Dokumentbetrag,
+      // gebucht_* trägt den gebuchten Teil. Läuft vor der Festschreibung (Status noch offen).
+      if (teilbetragBasis && teilbetragWert !== null && teilbetragWert > 0) {
+        const satz = Number(beleg.mwst_satz ?? 0);
+        const faktor = 1 + satz / 100;
+        const runde = (n: number) => Math.round(n * 100) / 100;
+        let gBrutto: number;
+        let gNetto: number;
+        if (teilbetragBasis === "brutto") {
+          gBrutto = teilbetragWert;
+          gNetto = faktor > 0 ? gBrutto / faktor : gBrutto;
+        } else {
+          gNetto = teilbetragWert;
+          gBrutto = gNetto * faktor;
+        }
+        gBrutto = runde(gBrutto);
+        gNetto = runde(gNetto);
+        const gMwst = runde(gBrutto - gNetto);
+        const dokBrutto = Number(beleg.betrag_brutto ?? 0);
+        if (dokBrutto > 0 && gBrutto > dokBrutto + 0.005) {
+          return {
+            status: 422 as const,
+            fehler: `Teilbetrag (${gBrutto.toFixed(2)} €) darf den Rechnungsbetrag (${dokBrutto.toFixed(2)} €) nicht übersteigen`,
+          };
+        }
+        await tx`
+          UPDATE belege
+             SET gebucht_brutto = ${gBrutto}, gebucht_netto = ${gNetto}, gebucht_mwst = ${gMwst},
+                 teilbetrag_basis = ${teilbetragBasis}, teilbetrag_grund = ${teilbetragGrund}
+           WHERE id = ${id}`;
+        await tx`
+          INSERT INTO audit_log (beleg_id, mandant_id, aktion, alter_wert, neuer_wert)
+          VALUES (${id}, ${session.mandantId}, 'teilbetrag_gebucht',
+                  ${dokBrutto.toFixed(2)}, ${`${gBrutto.toFixed(2)} brutto (${teilbetragBasis})`})`;
       }
 
       if (neuesSachkonto && neuesSachkonto !== beleg.sachkonto) {

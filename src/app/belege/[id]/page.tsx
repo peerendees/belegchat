@@ -92,6 +92,15 @@ export default async function BelegDetailPage({
               </dd>
               <dt className="text-muted-foreground">Eingangskanal</dt>
               <dd>{beleg.eingangskanal as string}</dd>
+              {beleg.gebucht_brutto != null ? (
+                <>
+                  <dt className="text-muted-foreground">Gebucht (Teilbetrag)</dt>
+                  <dd>
+                    {euro(beleg.gebucht_brutto)} brutto · {euro(beleg.gebucht_netto)} netto
+                    {beleg.teilbetrag_grund ? ` — ${beleg.teilbetrag_grund as string}` : ""}
+                  </dd>
+                </>
+              ) : null}
               {beleg.beleg_typ === "bewirtung" ? (
                 <>
                   <dt className="text-muted-foreground">Bewirtung – Anlass</dt>
@@ -170,6 +179,16 @@ export default async function BelegDetailPage({
                 grundInitial={(beleg.termin_grund as string) ?? ""}
                 ortInitial={(beleg.termin_ort as string) ?? ""}
                 kundeInitial={(beleg.termin_kunde as string) ?? ""}
+                erlaubtTeilbetrag={!["bewirtung", "auswaerts"].includes(beleg.beleg_typ as string)}
+                betragBrutto={Number(beleg.betrag_brutto ?? 0)}
+                mwstSatz={Number(beleg.mwst_satz ?? 0)}
+                teilbetragBasisInitial={(beleg.teilbetrag_basis as string) ?? ""}
+                teilbetragWertInitial={
+                  beleg.gebucht_brutto != null
+                    ? String(beleg.teilbetrag_basis === "netto" ? beleg.gebucht_netto : beleg.gebucht_brutto)
+                    : ""
+                }
+                teilbetragGrundInitial={(beleg.teilbetrag_grund as string) ?? ""}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />
