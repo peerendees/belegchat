@@ -1,0 +1,12 @@
+name: Semgrep
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install semgrep
+      - name: Run Semgrep (registry packs + custom rules)
+        run: semgrep --config p/security-audit --config .semgrep/ --error --quiet

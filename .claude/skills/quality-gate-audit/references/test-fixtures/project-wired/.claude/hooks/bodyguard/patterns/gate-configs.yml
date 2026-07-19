@@ -1,0 +1,6 @@
+# Bodyguard Layer-0 — Quality-Gate-Aufweichung (BOO-176)  [Fixture-Kopie]
+- name: semgrep-rule-disable
+  pattern: '# nosemgrep'
+  sprache: alle
+  quelle: 'BOO-176 / Quality-Gate-Schutz'
+  action: warn

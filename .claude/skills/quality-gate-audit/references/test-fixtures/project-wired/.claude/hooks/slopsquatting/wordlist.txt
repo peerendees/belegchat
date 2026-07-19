@@ -1,0 +1,6 @@
+# .claude/hooks/slopsquatting/wordlist.txt — bekannte Slopsquatting-/Typosquatting-Pakete (BOO-197)
+# last_refreshed: 2026-06-14
+# Format: <ecosystem>:<package-name>   (ecosystem = npm | pypi | cargo)
+pypi:colourama
+pypi:requasts
+npm:noblox.js-proxy

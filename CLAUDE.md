@@ -109,6 +109,18 @@ Sync-Anleitung: `docs/vault/README.md`
 
 ---
 
+## Governance
+
+> **PROJEKT-TYP: AKTIV** — Code + Deployment in diesem Repo
+
+- **Vertrag:** `CONVENTIONS.md` (Runtime, Gates, Modi)
+- **Vokabular:** `CONTEXT.md` (kanonische Begriffe)
+- **Architektur-Hub:** `ARCHITECTURE_DESIGN.md` (§9 Referenzen = Doku-Landkarte)
+- **Index:** `INDEX.md` (alle Dokumente auf einen Blick)
+- **Neue Datei?** MUSS sofort in `ARCHITECTURE_DESIGN.md §9` UND `INDEX.md` eingetragen werden — vor dem git commit.
+
+---
+
 ## Session-Übergabe
 
 Am Ende jeder Arbeitseinheit:

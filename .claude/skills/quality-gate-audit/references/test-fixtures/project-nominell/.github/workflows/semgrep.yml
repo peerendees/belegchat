@@ -1,0 +1,12 @@
+name: Semgrep
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install semgrep
+      # NOMINELL: laedt nur Registry-Packs, NICHT --config .semgrep/ -> Custom-Rules laufen in CI nie.
+      - run: semgrep --config p/security-audit --error --quiet

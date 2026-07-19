@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# governance — local reports (re-erzeugbar, nicht committen)
+journal/reports/local/
+
+# claude settings (lokale Overrides)
+.claude/settings.local.json

@@ -1,0 +1,1 @@
+# Leeres .semgrep/-Verzeichnis: existiert, aber keine Regel-Dateien -> Gate "blind".

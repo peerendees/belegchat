@@ -1,0 +1,70 @@
+{
+  "project": {
+    "name": "BelegChat",
+    "version": "0.1.0",
+    "issue_prefix": "BER-",
+    "documentation_language": "de",
+    "code_language": "en"
+  },
+  "metadata": {
+    "stack": "nextjs-typescript",
+    "framework": "next",
+    "language": "typescript",
+    "runtime": "node",
+    "ci_mode": "hybrid",
+    "deployment_scenario": "solo-mac"
+  },
+  "governance": {
+    "mode": "standard",
+    "classification": "internal",
+    "compliance_doc_gate": false,
+    "learning_loop": "L1",
+    "enforcement_confirmed": false
+  },
+  "runtime": {
+    "target": "claude-code",
+    "backlog_adapter": "linear",
+    "execution_isolation": "write-scope"
+  },
+  "llm": {
+    "provider": "anthropic"
+  },
+  "addons": [
+    "privacy",
+    "compliance"
+  ],
+  "tools_available": {
+    "eslint": true,
+    "typescript": true,
+    "semgrep": false,
+    "sonarqube_cloud": false,
+    "gitleaks": false,
+    "trivy": false
+  },
+  "skills": {
+    "tier": "standard",
+    "selected": [
+      "ideation",
+      "implement",
+      "backlog",
+      "intent",
+      "research",
+      "quality-gate-audit",
+      "architecture-review",
+      "sprint-review",
+      "insights-review",
+      "security-architect",
+      "dpo",
+      "knowledge-onboarding",
+      "brownfield-onboarding",
+      "infrastructure-onboarding",
+      "sprint-run",
+      "resolve-conflict"
+    ]
+  },
+  "paths": {
+    "project": "/Users/Shared/Projekte/Entwicklung/Projekte/belegchat",
+    "obsidian_vault": "/Users/kunkel/BERENT-2nd-Brain",
+    "obsidian_project": "/Users/kunkel/BERENT-2nd-Brain/02 Projekte/BelegChat"
+  }
+}

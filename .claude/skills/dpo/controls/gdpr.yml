@@ -1,0 +1,144 @@
+# dpo/controls/gdpr.yml — DSGVO-Kontrollkatalog (BOO-87)
+# Deterministischer Kontrollkatalog, vom dpo-AUDIT-Modus abgearbeitet.
+# Kuratiert aus dem DSGVO-Text — KEINE Rechtsberatung, der Operator entscheidet.
+#
+# Flaches Schema (dependency-frei, Mini-Parser im Runner):
+#   id        Control-ID
+#   titel     Klartext-Bezeichnung
+#   evidenz   geforderter Nachweis
+#   check_typ file-exists | file-contains | grep-absent | review
+#   check_arg  file-exists  -> Pfad
+#              file-contains -> 'Pfad::Suchtext'
+#              grep-absent   -> Regex (GAP wenn in Source gefunden; PASS wenn abwesend)
+#              review        -> '' (Urteils-Check -> REVIEW-NEEDED)
+#   mapsTo    Verweis auf Check/Artefakt
+#   quelle    Herkunft (DSGVO-Artikel) — Pflicht, Audit-Beleg
+#   ergebnis  wird beim Lauf gesetzt (PASS|GAP|REVIEW-NEEDED) — hier leer
+
+- id: GDPR-Art13-001
+  titel: Datenschutzerklaerung vorhanden
+  evidenz: 'Datenschutzerklaerung/Privacy-Doku im Projekt'
+  check_typ: file-exists
+  check_arg: 'PRIVACY.md'
+  mapsTo: 'PRIVACY.md'
+  quelle: 'DSGVO Art. 13/14'
+  ergebnis: ''
+
+- id: GDPR-Art30-001
+  titel: Verarbeitungsverzeichnis vorhanden
+  evidenz: 'PRIVACY.md enthaelt eine Verarbeitungsverzeichnis-Sektion'
+  check_typ: file-contains
+  check_arg: 'PRIVACY.md::Verarbeitungsverzeichnis'
+  mapsTo: 'PRIVACY.md Verarbeitungsverzeichnis; references/verarbeitungsverzeichnis.md'
+  quelle: 'DSGVO Art. 30'
+  ergebnis: ''
+
+- id: GDPR-Art17-001
+  titel: Loeschkonzept dokumentiert
+  evidenz: 'PRIVACY.md nennt Loeschfristen pro Datenkategorie'
+  check_typ: file-contains
+  check_arg: 'PRIVACY.md::Loeschfrist'
+  mapsTo: 'PRIVACY.md Loeschkonzept'
+  quelle: 'DSGVO Art. 17'
+  ergebnis: ''
+
+- id: GDPR-Art32-001
+  titel: Keine Klartext-Secrets im Code (Vertraulichkeit)
+  evidenz: 'Keine hardcoded AWS-Keys/Secrets im Quellcode'
+  check_typ: grep-absent
+  check_arg: 'AKIA[0-9A-Z]{16}'
+  mapsTo: 'Bodyguard Layer 0 (BOO-86) + Secret-Scan'
+  quelle: 'DSGVO Art. 32'
+  ergebnis: ''
+
+- id: GDPR-Art32-002
+  titel: TLS-Zertifikatspruefung nicht abgeschaltet
+  evidenz: 'Keine abgeschaltete Zertifikatspruefung im Code'
+  check_typ: grep-absent
+  check_arg: '(verify\s*=\s*False|rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*.?0)'
+  mapsTo: 'DSGVO Art. 32 Integritaet/Vertraulichkeit; Security Architect'
+  quelle: 'DSGVO Art. 32'
+  ergebnis: ''
+
+- id: GDPR-Art6-001
+  titel: Rechtsgrundlage je Verarbeitung
+  evidenz: 'Jede Verarbeitung nennt eine Rechtsgrundlage nach Art. 6'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'PRIVACY.md Rechtsgrundlagen; manuelle Pruefung'
+  quelle: 'DSGVO Art. 6 Abs. 1'
+  ergebnis: ''
+
+- id: GDPR-Art5-001
+  titel: Zweckbindung
+  evidenz: 'Jede Verarbeitung hat einen festgelegten, dokumentierten Zweck'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'PRIVACY.md Zwecke; Datenfluss-Review'
+  quelle: 'DSGVO Art. 5 Abs. 1 lit. b'
+  ergebnis: ''
+
+- id: GDPR-Art5-002
+  titel: Datenminimierung
+  evidenz: 'Nur fuer den Zweck notwendige Datenfelder werden erhoben'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'Datenmodell-Review'
+  quelle: 'DSGVO Art. 5 Abs. 1 lit. c'
+  ergebnis: ''
+
+- id: GDPR-Art28-001
+  titel: Auftragsverarbeitung (AVV) erfasst
+  evidenz: 'Alle externen Dienstleister mit AVV/DPA dokumentiert'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'PRIVACY.md Auftragsverarbeiter'
+  quelle: 'DSGVO Art. 28'
+  ergebnis: ''
+
+# --- BOO-427: Privacy by Design/Default, DPIA-Pflicht, Re-Klassifizierung, PII-Heuristik ---
+
+- id: GDPR-Art25-001
+  titel: Privacy by Design/Default verankert
+  evidenz: 'PRIVACY.md enthaelt den Privacy-by-Design-Ablauf (Frage/Stopp/Audit)'
+  check_typ: file-contains
+  check_arg: 'PRIVACY.md::Privacy-by-Design'
+  mapsTo: 'PRIVACY.md §7 Privacy-by-Design-Ablauf'
+  quelle: 'DSGVO Art. 25'
+  ergebnis: ''
+
+- id: GDPR-Art25-002
+  titel: Default-Einstellungen datensparsam (Opt-in statt Opt-out)
+  evidenz: 'Voreinstellungen erheben nur das Noetige; Einwilligungen sind Opt-in'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'Feature-Defaults-Review; dpo REVIEW-Modus Pruefpunkt Datensparsamkeit'
+  quelle: 'DSGVO Art. 25 Abs. 2'
+  ergebnis: ''
+
+- id: GDPR-Art25-003
+  titel: Privacy-Add-on aktiv wenn PII-Pfade deklariert (Re-Klassifizierung)
+  evidenz: 'Deklarierte personal-data-paths ohne aktives Privacy-Add-on = inkonsistente Einstufung'
+  check_typ: conditional-file
+  check_arg: '.claude/personal-data-paths.json::PRIVACY.md'
+  mapsTo: 'Privacy-Add-on nachruesten (bootstrap Privacy-Add-on / intentron migrate BOO-69)'
+  quelle: 'DSGVO Art. 25'
+  ergebnis: ''
+
+- id: GDPR-Art35-001
+  titel: DPIA-Pflicht geprueft bei hohem Risiko
+  evidenz: 'Fuer Verarbeitungen mit voraussichtlich hohem Risiko liegt eine DPIA unter dpia/ vor (oder die Schwellenpruefung ist dokumentiert)'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'dpia/DPIA-<feature>.md; dpo ASSESS-Modus'
+  quelle: 'DSGVO Art. 35'
+  ergebnis: ''
+
+- id: GDPR-Art5-003
+  titel: 'PII-Heuristik: personenbezogene Spalten in Migrationen'
+  evidenz: 'Neue email-/phone-/birthdate-Spalten in Migrationen sind ein PII-Indiz — Hinweis, kein Urteil'
+  check_typ: grep-review
+  check_arg: 'migration::(?i)\b(email|e_mail|phone|telefon|mobile|birth|geburts)\w*\b'
+  mapsTo: 'Re-Klassifizierung pruefen: personal-data-paths.json ergaenzen; dpo REVIEW'
+  quelle: 'DSGVO Art. 5 Abs. 1 lit. c'
+  ergebnis: ''

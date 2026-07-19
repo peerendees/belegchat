@@ -1,0 +1,79 @@
+# dpo/controls/ndsg.yml — Schweizer nDSG-Kontrollkatalog (BOO-87)
+# CH-Alleinstellung: agentic-security deckt nDSG NICHT ab.
+# Kuratiert aus dem nDSG-Text (in Kraft seit 2023) — KEINE Rechtsberatung.
+# Schema identisch zu gdpr.yml (siehe dort den Schema-Kopf).
+# Hinweis: nDSG spricht von "Bearbeitung" (nicht "Verarbeitung") personenbezogener Daten.
+
+- id: NDSG-Art19-001
+  titel: Informationspflicht bei Beschaffung
+  evidenz: 'Datenschutzerklaerung informiert ueber die Beschaffung von Personendaten'
+  check_typ: file-exists
+  check_arg: 'PRIVACY.md'
+  mapsTo: 'PRIVACY.md'
+  quelle: 'nDSG Art. 19'
+  ergebnis: ''
+
+- id: NDSG-Art12-001
+  titel: Bearbeitungsverzeichnis vorhanden
+  evidenz: 'PRIVACY.md enthaelt ein Bearbeitungs-/Verarbeitungsverzeichnis'
+  check_typ: file-contains
+  check_arg: 'PRIVACY.md::Verzeichnis'
+  mapsTo: 'PRIVACY.md Bearbeitungsverzeichnis'
+  quelle: 'nDSG Art. 12'
+  ergebnis: ''
+
+- id: NDSG-Art8-001
+  titel: Datensicherheit (TOMs, keine Klartext-Secrets)
+  evidenz: 'Technische/organisatorische Massnahmen dokumentiert; keine hardcoded Secrets'
+  check_typ: grep-absent
+  check_arg: 'AKIA[0-9A-Z]{16}'
+  mapsTo: 'nDSG Art. 8 + VDSG; Security Architect'
+  quelle: 'nDSG Art. 8 / VDSG'
+  ergebnis: ''
+
+- id: NDSG-Art16-001
+  titel: Bekanntgabe ins Ausland (Auswirkungsprinzip)
+  evidenz: 'Drittland-Transfers gegen die Bundesrats-Laenderliste geprueft'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'PRIVACY.md Drittland-Transfers; Laenderliste Bundesrat'
+  quelle: 'nDSG Art. 16/17'
+  ergebnis: ''
+
+- id: NDSG-Art22-001
+  titel: Datenschutz-Folgenabschaetzung bei hohem Risiko
+  evidenz: 'Bei hohem Risiko liegt eine DSFA vor; ggf. EDOEB konsultiert'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'references/dpia-template.md'
+  quelle: 'nDSG Art. 22'
+  ergebnis: ''
+
+- id: NDSG-Art24-001
+  titel: Meldung von Verletzungen an den EDOEB
+  evidenz: 'Prozess fuer Meldung "so rasch als moeglich" an den EDOEB dokumentiert'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'PRIVACY.md Incident-Response'
+  quelle: 'nDSG Art. 24'
+  ergebnis: ''
+
+- id: NDSG-Art25-001
+  titel: Auskunftsrecht (30 Tage)
+  evidenz: 'Prozess/Endpoint fuer Auskunftsbegehren innert 30 Tagen'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'references/betroffenenrechte.md'
+  quelle: 'nDSG Art. 25'
+  ergebnis: ''
+
+# --- BOO-427: Datenschutz durch Technik und datenschutzfreundliche Voreinstellungen ---
+
+- id: NDSG-Art7-001
+  titel: Datenschutz durch Technik und Voreinstellungen
+  evidenz: 'PRIVACY.md enthaelt den Privacy-by-Design-Ablauf; Voreinstellungen datensparsam'
+  check_typ: file-contains
+  check_arg: 'PRIVACY.md::Privacy-by-Design'
+  mapsTo: 'PRIVACY.md §7 Privacy-by-Design-Ablauf; Feature-Defaults-Review'
+  quelle: 'nDSG Art. 7'
+  ergebnis: ''
