@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "paths": [
+    {
+      "path": "src/app/api/auth/**",
+      "category": "auth-credentials",
+      "sensitivity": "high",
+      "description": "Passkey-Registration und Login"
+    },
+    {
+      "path": "src/app/api/belege/**",
+      "category": "financial-data",
+      "sensitivity": "high",
+      "description": "Belegdaten mit Betraegen und Lieferanten"
+    },
+    {
+      "path": "supabase/migrations/**",
+      "category": "schema",
+      "sensitivity": "medium",
+      "description": "Datenbankschema mit PII-Spalten"
+    },
+    {
+      "path": "scripts/beleg-import/**",
+      "category": "financial-data",
+      "sensitivity": "high",
+      "description": "PDF-Import mit Belegdaten"
+    }
+  ]
+}

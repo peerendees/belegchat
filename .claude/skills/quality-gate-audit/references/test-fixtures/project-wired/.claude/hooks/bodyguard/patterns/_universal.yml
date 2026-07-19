@@ -1,0 +1,17 @@
+# Bodyguard Layer-0 — universelle Muster (sprachunabhaengig)  [Fixture-Kopie]
+# Schema: - name / pattern / sprache / quelle / action(block|warn)
+- name: aws-access-key-id
+  pattern: 'AKIA[0-9A-Z]{16}'
+  sprache: alle
+  quelle: 'gitleaks / CWE-798'
+  action: block
+- name: private-key-block
+  pattern: '-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----'
+  sprache: alle
+  quelle: 'gitleaks / CWE-321'
+  action: block
+- name: generic-secret-assignment
+  pattern: '(?i)(api[_-]?key|secret|token|passwd|password)\s*[:=]\s*[\x27"][^\x27"]{8,}[\x27"]'
+  sprache: alle
+  quelle: 'gitleaks / CWE-798'
+  action: warn

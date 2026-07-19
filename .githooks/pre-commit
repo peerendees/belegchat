@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# pre-commit — Quality-Gate Layer 2: ESLint + Semgrep + Dependency-Check
+# Installiert via: bash scripts/install-hooks.sh (setzt core.hooksPath=.githooks)
+
+set -euo pipefail
+
+echo "=== Pre-Commit Gate (Layer 2) ==="
+
+# 1. ESLint
+echo "[1/3] ESLint..."
+if command -v npx &>/dev/null; then
+  npx eslint . 2>/dev/null || {
+    echo "BLOCKED: ESLint-Fehler gefunden. Bitte beheben."
+    exit 1
+  }
+else
+  echo "WARN: npx nicht verfuegbar, ESLint uebersprungen."
+fi
+
+# 2. TypeScript Typecheck
+echo "[2/3] TypeScript Typecheck..."
+if command -v npx &>/dev/null; then
+  npx tsc --noEmit 2>/dev/null || {
+    echo "BLOCKED: TypeScript-Fehler gefunden. Bitte beheben."
+    exit 1
+  }
+else
+  echo "WARN: npx nicht verfuegbar, Typecheck uebersprungen."
+fi
+
+# 3. Semgrep (wenn installiert)
+echo "[3/3] Semgrep..."
+if command -v semgrep &>/dev/null; then
+  PACKS="p/javascript p/typescript p/react p/nextjs p/security-audit p/owasp-top-ten"
+  CONFIG_FLAGS=""
+  for pack in $PACKS; do
+    CONFIG_FLAGS="$CONFIG_FLAGS --config $pack"
+  done
+  semgrep $CONFIG_FLAGS --error --quiet 2>/dev/null || {
+    echo "BLOCKED: Semgrep-Findings. Bitte beheben."
+    exit 1
+  }
+else
+  echo "WARN: Semgrep nicht installiert, SAST uebersprungen."
+fi
+
+echo "=== Pre-Commit Gate: PASS ==="
+exit 0

@@ -1,0 +1,11 @@
+# .semgrep/custom-rules.yml — projekt-eigene Semgrep-Regeln (BOO-185)
+# Wiring-Canary: matcht ausschliesslich den Tripwire in test-fixtures/wiring-canary.py.
+rules:
+  - id: qgaudit-wiring-canary
+    languages: [python]
+    severity: ERROR
+    message: >
+      QGAUDIT wiring canary fired — custom Semgrep rules are wired. Expected ONLY in
+      .semgrep/test-fixtures/wiring-canary.py.
+    patterns:
+      - pattern: $X = "QGAUDIT-CANARY-TRIPWIRE"

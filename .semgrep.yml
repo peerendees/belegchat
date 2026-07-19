@@ -1,0 +1,12 @@
+# Semgrep-Manifest — BelegChat
+# Layer 2 (Pre-Commit) + Layer 3 (CI) lesen dieses Manifest.
+
+rules: []
+
+# Aktive Packs (von Pre-Commit + CI gelesen):
+# p/javascript
+# p/typescript
+# p/react
+# p/nextjs
+# p/security-audit
+# p/owasp-top-ten

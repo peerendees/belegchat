@@ -1,0 +1,8 @@
+# Semgrep Ignore — BelegChat
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.min.js
+*.min.css

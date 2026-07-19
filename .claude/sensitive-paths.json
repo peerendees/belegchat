@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "description": "Pfade mit Mandatory Human Review",
+  "paths": [
+    {
+      "pattern": "src/app/api/auth/**",
+      "reason": "Auth-Logik (Passkey, Sessions)",
+      "reviewer": "operator"
+    },
+    {
+      "pattern": "supabase/migrations/**",
+      "reason": "Datenbank-Schema-Aenderungen (GoBD-relevant)",
+      "reviewer": "operator"
+    },
+    {
+      "pattern": ".env*",
+      "reason": "Secrets / Environment-Variablen",
+      "reviewer": "operator"
+    },
+    {
+      "pattern": "scripts/beleg-import/**",
+      "reason": "Beleg-Import mit Zugriff auf Finanzdaten",
+      "reviewer": "operator"
+    }
+  ]
+}

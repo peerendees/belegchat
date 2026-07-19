@@ -1,0 +1,83 @@
+# dpo/controls/optional/eu-ai-act.yml — EU-AI-Act-Kontrollkatalog (BOO-101/105)
+# Deterministischer Kontrollkatalog fuer den dpo-AUDIT-Modus. Liegt bewusst unter
+# controls/optional/ und wird vom Runner NICHT automatisch geladen: erst wenn das
+# EU-AI-Act-Add-on (Bootstrap-Phase 4.4n-bis, BOO-105) ihn ins Projekt-Overlay
+# .claude/dpo/controls/ kopiert, greift er — und dann nur fuer dieses Projekt.
+# Kuratiert aus der KI-Verordnung (VO (EU) 2024/1689) — KEINE Rechtsberatung,
+# der Operator entscheidet. Relevant nur bei KI-Anteil, der (Kunden-)Daten verarbeitet.
+#
+# Gleiches flaches Schema wie gdpr.yml/ndsg.yml:
+#   id | titel | evidenz | check_typ (file-exists|file-contains|grep-absent|review)
+#   check_arg | mapsTo | quelle (AI-Act-Bezug, Audit-Beleg) | ergebnis (leer)
+
+- id: AIACT-Doc-001
+  titel: KI-System-Dokumentation vorhanden
+  evidenz: 'AI_SYSTEM.md im Projekt (Zweck, Risikoklasse, Massnahmen)'
+  check_typ: file-exists
+  check_arg: 'AI_SYSTEM.md'
+  mapsTo: 'AI_SYSTEM.md (Template: dpo/references/ai-system-template.md)'
+  quelle: 'EU AI Act (VO (EU) 2024/1689) Art. 11 + Anhang IV (Technische Dokumentation)'
+  ergebnis: ''
+
+- id: AIACT-Art6-001
+  titel: Risikoklassifizierung dokumentiert
+  evidenz: 'AI_SYSTEM.md benennt die Risikoklasse (verboten/hochrisiko/begrenzt/minimal)'
+  check_typ: file-contains
+  check_arg: 'AI_SYSTEM.md::Risikoklasse'
+  mapsTo: 'AI_SYSTEM.md Abschnitt Risikoklassifizierung'
+  quelle: 'EU AI Act Art. 6 + Anhang III (Hochrisiko-Einstufung)'
+  ergebnis: ''
+
+- id: AIACT-Art13-001
+  titel: Transparenz-/Kennzeichnungspflicht adressiert
+  evidenz: 'AI_SYSTEM.md beschreibt Transparenz ggue Nutzern (KI-Kennzeichnung)'
+  check_typ: file-contains
+  check_arg: 'AI_SYSTEM.md::Transparenz'
+  mapsTo: 'AI_SYSTEM.md Abschnitt Transparenz'
+  quelle: 'EU AI Act Art. 13/50 (Transparenzpflichten)'
+  ergebnis: ''
+
+- id: AIACT-Art14-001
+  titel: Menschliche Aufsicht (Human Oversight) definiert
+  evidenz: 'AI_SYSTEM.md beschreibt Human-Oversight-Massnahmen'
+  check_typ: file-contains
+  check_arg: 'AI_SYSTEM.md::Human Oversight'
+  mapsTo: 'AI_SYSTEM.md Abschnitt Human Oversight'
+  quelle: 'EU AI Act Art. 14 (Menschliche Aufsicht)'
+  ergebnis: ''
+
+- id: AIACT-Art12-001
+  titel: Protokollierung / Nachvollziehbarkeit vorgesehen
+  evidenz: 'AI_SYSTEM.md beschreibt Logging/Record-Keeping des KI-Systems'
+  check_typ: file-contains
+  check_arg: 'AI_SYSTEM.md::Logging'
+  mapsTo: 'AI_SYSTEM.md Abschnitt Logging'
+  quelle: 'EU AI Act Art. 12 (Aufzeichnungspflichten)'
+  ergebnis: ''
+
+- id: AIACT-Art5-001
+  titel: Verbotene Praktiken ausgeschlossen
+  evidenz: 'Pruefung, ob das System unter verbotene Praktiken faellt (z.B. Social Scoring)'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'AI_SYSTEM.md Risikoklassifizierung; Operator-Urteil'
+  quelle: 'EU AI Act Art. 5 (Verbotene Praktiken)'
+  ergebnis: ''
+
+- id: AIACT-Art6-002
+  titel: Hochrisiko-Einstufung + Konformitaetspflichten beurteilt
+  evidenz: 'Operator beurteilt Hochrisiko-Status + ggf. Konformitaetsbewertung'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'AI_SYSTEM.md; Operator-Urteil'
+  quelle: 'EU AI Act Art. 6 + Anhang III; Kap. III (Anforderungen Hochrisiko)'
+  ergebnis: ''
+
+- id: AIACT-GPAI-001
+  titel: GPAI-/Basismodell-Betroffenheit geprueft
+  evidenz: 'Wird ein General-Purpose-AI-Modell genutzt/bereitgestellt? Pflichten beurteilt'
+  check_typ: review
+  check_arg: ''
+  mapsTo: 'AI_SYSTEM.md; Operator-Urteil'
+  quelle: 'EU AI Act Kap. V (GPAI-Modelle)'
+  ergebnis: ''
