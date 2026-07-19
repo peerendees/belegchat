@@ -5,6 +5,7 @@ import { withMandant, sql } from "@/lib/db";
 import { euro, datum, datumZeit, STATUS_LABELS } from "@/lib/format";
 import { FreigabeForm } from "@/components/freigabe-form";
 import { LoeschenButton } from "@/components/loeschen-button";
+import { BelegNavigation } from "@/components/beleg-navigation";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -32,10 +33,27 @@ export default async function BelegDetailPage({
     const audit = await tx`
       SELECT aktion, alter_wert, neuer_wert, created_at
         FROM audit_log WHERE beleg_id = ${id} ORDER BY created_at, id`;
-    return { beleg: belege[0], seiten, audit };
+    // Nachbarn in Listenreihenfolge (created_at DESC, id DESC) — BER-112.
+    // Zusammengesetzter Schlüssel, damit die Navigation auch bei gleichem
+    // created_at (Batch-Import) eindeutig und sprungfrei bleibt.
+    const vorher = await tx`
+      SELECT id FROM belege
+       WHERE (created_at, id) > (${belege[0].created_at}, ${belege[0].id})
+       ORDER BY created_at ASC, id ASC LIMIT 1`;
+    const naechster = await tx`
+      SELECT id FROM belege
+       WHERE (created_at, id) < (${belege[0].created_at}, ${belege[0].id})
+       ORDER BY created_at DESC, id DESC LIMIT 1`;
+    return {
+      beleg: belege[0],
+      seiten,
+      audit,
+      vorherId: (vorher[0]?.id as string) ?? null,
+      naechsterId: (naechster[0]?.id as string) ?? null,
+    };
   });
   if (!daten) notFound();
-  const { beleg, seiten, audit } = daten;
+  const { beleg, seiten, audit, vorherId, naechsterId } = daten;
 
   const konten = await sql`
     SELECT konto_nr, bezeichnung FROM skr04_konten
@@ -52,15 +70,18 @@ export default async function BelegDetailPage({
           </Link>
           <h1 className="text-2xl font-semibold">{beleg.beleg_nr as string}</h1>
         </div>
-        <span
-          className={
-            offen
-              ? "rounded bg-amber-100 px-3 py-1 text-sm text-amber-800"
-              : "rounded bg-green-100 px-3 py-1 text-sm text-green-800"
-          }
-        >
-          {STATUS_LABELS[beleg.status as string] ?? (beleg.status as string)}
-        </span>
+        <div className="flex items-center gap-3">
+          <BelegNavigation vorherId={vorherId} naechsterId={naechsterId} />
+          <span
+            className={
+              offen
+                ? "rounded bg-amber-100 px-3 py-1 text-sm text-amber-800"
+                : "rounded bg-green-100 px-3 py-1 text-sm text-green-800"
+            }
+          >
+            {STATUS_LABELS[beleg.status as string] ?? (beleg.status as string)}
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
