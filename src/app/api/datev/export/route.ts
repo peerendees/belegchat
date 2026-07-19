@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
         SELECT id, beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck,
-               trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto
+               trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto, stb_vermerk
           FROM belege
          WHERE status = 'geprueft'
            AND beleg_datum BETWEEN ${von} AND ${bis}

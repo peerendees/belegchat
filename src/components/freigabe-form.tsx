@@ -25,6 +25,7 @@ export function FreigabeForm({
   teilbetragBasisInitial = "",
   teilbetragWertInitial = "",
   teilbetragGrundInitial = "",
+  stbVermerkInitial = "",
 }: {
   belegId: string;
   aktuellesSachkonto: string;
@@ -43,6 +44,7 @@ export function FreigabeForm({
   teilbetragBasisInitial?: string;
   teilbetragWertInitial?: string;
   teilbetragGrundInitial?: string;
+  stbVermerkInitial?: string;
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
@@ -56,6 +58,7 @@ export function FreigabeForm({
   const [teilbetragBasis, setTeilbetragBasis] = useState(teilbetragBasisInitial || "brutto");
   const [teilbetragWert, setTeilbetragWert] = useState(teilbetragWertInitial);
   const [teilbetragGrund, setTeilbetragGrund] = useState(teilbetragGrundInitial);
+  const [stbVermerk, setStbVermerk] = useState(stbVermerkInitial);
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -102,6 +105,7 @@ export function FreigabeForm({
       if ((istBewirtung || istAuswaerts) && trinkgeld.trim()) {
         payload.trinkgeld = trinkgeld;
       }
+      if (stbVermerk !== stbVermerkInitial) payload.stb_vermerk = stbVermerk;
       if (erlaubtTeilbetrag && teilbetragAktiv && teilbetragWert.trim()) {
         payload.teilbetrag_basis = teilbetragBasis;
         payload.teilbetrag_wert = teilbetragWert;
@@ -259,6 +263,20 @@ export function FreigabeForm({
           )}
         </div>
       )}
+
+      <div className="space-y-1">
+        <Label htmlFor="stbVermerk">Vermerk für den Steuerberater (optional)</Label>
+        <input
+          id="stbVermerk"
+          className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+          value={stbVermerk}
+          onChange={(e) => setStbVermerk(e.target.value)}
+          placeholder="z. B. Verdacht Anlagevermögen — AfA prüfen"
+        />
+        <p className="text-xs text-muted-foreground">
+          Erscheint im DATEV-Export als Zusatzinformation beim Steuerberater.
+        </p>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="sachkonto">Sachkonto (SKR04)</Label>

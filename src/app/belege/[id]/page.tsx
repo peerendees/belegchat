@@ -113,6 +113,12 @@ export default async function BelegDetailPage({
               </dd>
               <dt className="text-muted-foreground">Eingangskanal</dt>
               <dd>{beleg.eingangskanal as string}</dd>
+              {beleg.stb_vermerk ? (
+                <>
+                  <dt className="text-muted-foreground">StB-Vermerk</dt>
+                  <dd className="text-amber-800">{beleg.stb_vermerk as string}</dd>
+                </>
+              ) : null}
               {beleg.gebucht_brutto != null ? (
                 <>
                   <dt className="text-muted-foreground">Gebucht (Teilbetrag)</dt>
@@ -210,6 +216,7 @@ export default async function BelegDetailPage({
                     : ""
                 }
                 teilbetragGrundInitial={(beleg.teilbetrag_grund as string) ?? ""}
+                stbVermerkInitial={(beleg.stb_vermerk as string) ?? ""}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />
