@@ -8,11 +8,13 @@ const EDGE_URL =
   "/functions/v1/threema-decrypt";
 
 /**
- * Bewirtungs-Deckblatt als PDF: Kopfseite mit den Pflichtangaben
- * (§ 4 Abs. 5 Nr. 2 EStG) + Original-Belegseiten. Gerendert von der
- * Edge Function (dort liegt der Storage-Zugriff); die App liefert nur
- * RLS-geprüfte Metadaten und authentifiziert sich mit dem eng
- * begrenzten DECKBLATT_TOKEN.
+ * Deckblatt als PDF: Kopfseite mit den Pflicht-/Kontext-Angaben + Original-
+ * Belegseiten. Gerendert von der Edge Function (dort liegt der Storage-Zugriff);
+ * die App liefert nur RLS-geprüfte Metadaten (Titel + Feldliste) und
+ * authentifiziert sich mit dem eng begrenzten DECKBLATT_TOKEN.
+ *
+ * Zwei Ausprägungen (BER-99 Bewirtung, BER-107 Auswärtstermin) teilen denselben
+ * Renderer; hier wird nur die Feldliste je Beleg-Typ zusammengestellt.
  */
 export async function GET(
   _req: NextRequest,
@@ -32,7 +34,8 @@ export async function GET(
   const daten = await withMandant(session.mandantId, async (tx) => {
     const belege = await tx`
       SELECT beleg_nr, beleg_typ, beleg_datum, betrag_brutto, mwst_betrag, mwst_satz,
-             sachkonto, verwendungszweck, bewirtung_anlass, bewirtung_teilnehmer, trinkgeld
+             sachkonto, verwendungszweck, bewirtung_anlass, bewirtung_teilnehmer,
+             termin_grund, termin_ort, termin_kunde, trinkgeld
         FROM belege WHERE id = ${id} LIMIT 1`;
     if (belege.length === 0) return null;
     const seiten = await tx`
@@ -43,14 +46,68 @@ export async function GET(
   if (!daten) return NextResponse.json({ error: "Beleg nicht gefunden" }, { status: 404 });
 
   const { beleg, seiten } = daten;
-  if (beleg.beleg_typ !== "bewirtung") {
-    return NextResponse.json({ error: "Kein Bewirtungsbeleg" }, { status: 422 });
-  }
-  if (!beleg.bewirtung_anlass || !beleg.bewirtung_teilnehmer) {
-    return NextResponse.json(
-      { error: "Anlass und Teilnehmer zuerst erfassen (Freigabe-Formular)" },
-      { status: 422 },
-    );
+  const brutto = Number(beleg.betrag_brutto ?? 0);
+  const trinkgeld = Number(beleg.trinkgeld ?? 0);
+  const mwst = `${euro(beleg.mwst_betrag)}${beleg.mwst_satz ? ` (${beleg.mwst_satz} %)` : ""}`;
+
+  let action: "bewirtung-deckblatt" | "termin-deckblatt";
+  let titel: string;
+  let untertitel: string;
+  let fusszeile: string;
+  let felder: Array<[string, string]>;
+  let dateiPrefix: string;
+
+  if (beleg.beleg_typ === "bewirtung") {
+    if (!beleg.bewirtung_anlass || !beleg.bewirtung_teilnehmer) {
+      return NextResponse.json(
+        { error: "Anlass und Teilnehmer zuerst erfassen (Freigabe-Formular)" },
+        { status: 422 },
+      );
+    }
+    action = "bewirtung-deckblatt";
+    titel = "Bewirtungsbeleg";
+    untertitel = "Angaben nach § 4 Abs. 5 Nr. 2 EStG";
+    fusszeile = "Die 70/30-Aufteilung der abziehbaren Bewirtungskosten erfolgt in der Buchhaltung.";
+    dateiPrefix = "Bewirtung";
+    felder = [
+      ["Beleg-Nr.", String(beleg.beleg_nr)],
+      ["Datum der Bewirtung", datum(beleg.beleg_datum)],
+      ["Gaststätte / Ort", (beleg.verwendungszweck as string) || "—"],
+      ["Rechnungsbetrag (brutto)", euro(brutto)],
+      ["davon MwSt", mwst],
+      ["Trinkgeld", beleg.trinkgeld != null ? euro(trinkgeld) : "—"],
+      ["Gesamtaufwand", euro(brutto + trinkgeld)],
+      ["Anlass der Bewirtung", beleg.bewirtung_anlass as string],
+      ["Bewirtete Personen", beleg.bewirtung_teilnehmer as string],
+      ["SKR04-Konto", beleg.sachkonto as string],
+    ];
+  } else if (beleg.beleg_typ === "auswaerts") {
+    if (!beleg.termin_grund) {
+      return NextResponse.json(
+        { error: "Grund des Termins zuerst erfassen (Freigabe-Formular)" },
+        { status: 422 },
+      );
+    }
+    action = "termin-deckblatt";
+    titel = "Auswärtstermin";
+    untertitel = "Reisekosten — Nachweis der betrieblichen Veranlassung";
+    fusszeile = "Grund, Ort und Kunde belegen die betriebliche Veranlassung der Fahrt.";
+    dateiPrefix = "Termin";
+    felder = [
+      ["Beleg-Nr.", String(beleg.beleg_nr)],
+      ["Belegdatum", datum(beleg.beleg_datum)],
+      ["Beschreibung", (beleg.verwendungszweck as string) || "—"],
+      ["Betrag (brutto)", euro(brutto)],
+      ["davon MwSt", mwst],
+      ["Trinkgeld", beleg.trinkgeld != null ? euro(trinkgeld) : "—"],
+      ["Gesamtaufwand", euro(brutto + trinkgeld)],
+      ["Grund des Termins", beleg.termin_grund as string],
+      ["Ort", (beleg.termin_ort as string) || "—"],
+      ["Kunde / Geschäftspartner", (beleg.termin_kunde as string) || "—"],
+      ["SKR04-Konto", beleg.sachkonto as string],
+    ];
+  } else {
+    return NextResponse.json({ error: "Für diesen Beleg-Typ gibt es kein Deckblatt" }, { status: 422 });
   }
 
   const res = await fetch(EDGE_URL, {
@@ -60,18 +117,12 @@ export async function GET(
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      action: "bewirtung-deckblatt",
+      action,
       angaben: {
-        beleg_nr: beleg.beleg_nr,
-        beleg_datum: datum(beleg.beleg_datum),
-        lieferant: beleg.verwendungszweck || "—",
-        betrag_brutto: euro(beleg.betrag_brutto),
-        mwst: `${euro(beleg.mwst_betrag)}${beleg.mwst_satz ? ` (${beleg.mwst_satz} %)` : ""}`,
-        anlass: beleg.bewirtung_anlass,
-        teilnehmer: beleg.bewirtung_teilnehmer,
-        trinkgeld: beleg.trinkgeld != null ? euro(beleg.trinkgeld) : "—",
-        gesamt: euro(Number(beleg.betrag_brutto ?? 0) + Number(beleg.trinkgeld ?? 0)),
-        sachkonto: beleg.sachkonto,
+        titel,
+        untertitel,
+        felder,
+        fusszeile,
         erstellt: datum(new Date().toISOString()),
       },
       seiten: seiten.map((s) => ({
@@ -94,7 +145,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="Bewirtung_${beleg.beleg_nr as string}.pdf"`,
+      "Content-Disposition": `attachment; filename="${dateiPrefix}_${beleg.beleg_nr as string}.pdf"`,
     },
   });
 }

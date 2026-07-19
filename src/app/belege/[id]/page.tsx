@@ -125,6 +125,19 @@ export default async function BelegDetailPage({
                   <dd>{(beleg.termin_kunde as string) || "—"}</dd>
                   <dt className="text-muted-foreground">Trinkgeld</dt>
                   <dd>{beleg.trinkgeld != null ? euro(beleg.trinkgeld) : "—"}</dd>
+                  {beleg.termin_grund ? (
+                    <>
+                      <dt className="text-muted-foreground">Deckblatt</dt>
+                      <dd>
+                        <a
+                          href={`/api/belege/${id}/deckblatt`}
+                          className="underline underline-offset-2"
+                        >
+                          Termin-Deckblatt als PDF (Deckblatt + Original)
+                        </a>
+                      </dd>
+                    </>
+                  ) : null}
                 </>
               ) : null}
               <dt className="text-muted-foreground">GoBD-Hash</dt>
