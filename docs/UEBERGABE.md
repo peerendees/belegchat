@@ -1,6 +1,6 @@
 # BelegChat — Übergabe & Systemstand
 
-> **Stand: 15.07.2026** · Abschluss der Aufbau-Session (Post-Alpha Phasen 1–4 + Erweiterungen).
+> **Stand: 19.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107 (Termin-Kontext Auswärts-Belege) live.
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -34,6 +34,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 - Threema-Mehrseiten-Eingang mit frühem Push (BER-95) · PDF-Batch/Hot-Folder (BER-90) · Proton-Mail-Scan → Sichtungsordner (BER-97)
 - Dashboard: Passkey-Auth (Multi-Passkey; NordPass-Fix `requireUserVerification:false`), Belegliste, Detail mit Audit-Trail, Freigabe mit SKR04-Korrektur, **Entwurf löschen** (Hash wird frei, Duplikatschutz bleibt)
 - **Bewirtung** (§ 4 Abs. 5 Nr. 2 EStG): Auto-Erkennung → Konto 6640 + `klaerungsbedarf`; Pflichtfelder Anlass/Teilnehmer bei Freigabe erzwungen; **Trinkgeld** als eigenes Feld (KI + manuell); **Deckblatt-PDF** (Kopfseite + Originalseiten) per Link in der Detailansicht
+- **Auswärts-Belege / Termin-Kontext** (BER-107, Verallgemeinerung des Bewirtungs-Musters): Auto-Erkennung Taxi/Bahn/ÖPNV → `beleg_typ auswaerts`, Konto **6860 Reisekosten**; Felder `termin_grund` (Pflicht → sonst `klaerungsbedarf`), `termin_ort`, `termin_kunde`; **Trinkgeld** generisch (Spalte `trinkgeld`, aus `bewirtung_trinkgeld` umbenannt); Termin-Kontext im DATEV-Buchungstext; **Termin-Deckblatt-PDF** (gemeinsamer Renderer mit Bewirtung)
 - DATEV-Export `/export` (Monat/Quartal/Jahr), Re-Download deterministisch; Trinkgeld erscheint im Buchungstext
 - GoBD: Festschreibung ab `geprueft`, append-only Audit, Hash-Duplikatschutz, `archived_at`; Verfahrensdoku: `docs/Verfahrensdokumentation_BelegChat_v1.0.docx` (BERENT-CI)
 
@@ -53,7 +54,6 @@ Vor dem Echtstart wurden **alle Test-/Aufbaudaten entfernt** (44 Belege, 41 Seit
 |-------|----------|
 | DATEV-Abnahme: realer Import beim StB (Format validiert die Kanzlei) | BER-96-Kommentare, `docs/DATEV.md` |
 | Kontierungsgedächtnis bauen, sobald SuSa/Kontenblätter 2024 vorliegen | [BER-98](https://linear.app/berent/issue/BER-98) |
-| **Termin-Kontext für Auswärts-Belege** (Taxi/Bahn/ÖPNV: Ort, Kunde, Grund, Trinkgeld — Verallgemeinerung des Bewirtungs-Musters; vollständig spezifiziert) | [BER-107](https://linear.app/berent/issue/BER-107) |
 | Echte Bewirtungs-Muster via Threema testen (Layout/OCR, Deckblatt mit Fotos) | BER-99 |
 | Landing-Feinschliff (Texte/Preise) | BER-22 |
 | Secret-Verifikationen (Threema-/Supabase-/Mistral-Keys nach Alt-Leak) | `SICHERHEIT.md` §0 |
