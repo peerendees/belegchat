@@ -40,6 +40,8 @@ export async function POST(
   const teilbetragWert =
     teilbetragRoh && !Number.isNaN(Number(teilbetragRoh)) ? Number(teilbetragRoh) : null;
   const teilbetragGrund = body.teilbetrag_grund != null ? String(body.teilbetrag_grund).trim() : null;
+  // Vermerk für den Steuerberater (BER-109) — bei Freigabe bestätig-/änderbar.
+  const stbVermerk = body.stb_vermerk != null ? String(body.stb_vermerk).trim() : null;
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
@@ -123,6 +125,12 @@ export async function POST(
           INSERT INTO audit_log (beleg_id, mandant_id, aktion, alter_wert, neuer_wert)
           VALUES (${id}, ${session.mandantId}, 'teilbetrag_gebucht',
                   ${dokBrutto.toFixed(2)}, ${`${gBrutto.toFixed(2)} brutto (${teilbetragBasis})`})`;
+      }
+
+      // StB-Vermerk übernehmen, solange der Beleg noch offen ist (BER-109).
+      if (stbVermerk !== null) {
+        await tx`
+          UPDATE belege SET stb_vermerk = NULLIF(${stbVermerk}, '') WHERE id = ${id}`;
       }
 
       if (neuesSachkonto && neuesSachkonto !== beleg.sachkonto) {

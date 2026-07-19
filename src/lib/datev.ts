@@ -14,6 +14,7 @@ export type DatevBeleg = {
   verwendungszweck: string | null;
   trinkgeld?: string | number | null;
   gebucht_brutto?: string | number | null;
+  stb_vermerk?: string | null;
   termin_grund?: string | null;
   termin_ort?: string | null;
   termin_kunde?: string | null;
@@ -181,6 +182,19 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
     text += " (Teilbetrag)";
   }
   row[13] = q(text.slice(0, 60)); // Buchungstext (DATEV: max. 60 Zeichen)
+
+  // Vermerk für den Steuerberater in die dafür vorgesehenen Zusatzinformations-
+  // Felder — nicht in den Buchungstext, der ist mit 60 Zeichen schon knapp (BER-109).
+  if (b.stb_vermerk) {
+    const artIdx = (TRANSACTION_COLUMNS as readonly string[]).indexOf(
+      "Zusatzinformation - Art 1",
+    );
+    if (artIdx >= 0) {
+      row[artIdx] = q("Hinweis");
+      row[artIdx + 1] = q(b.stb_vermerk.slice(0, 210)); // DATEV: max. 210 Zeichen
+    }
+  }
+
   return row.join(";");
 }
 
