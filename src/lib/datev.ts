@@ -78,9 +78,31 @@ export const TRANSACTION_COLUMNS = [
   "Generalumkehr (GU)", "Steuersatz", "Land",
 ] as const;
 
+/**
+ * Zeichen, die Latin-1 (ISO-8859-1) nicht kennt. Ohne Ersetzung schneidet
+ * Buffer.from(…, "latin1") beim Schreiben das High-Byte ab und erzeugt Müll —
+ * aus „–" (U+2013) wird z. B. das Steuerzeichen 0x13, aus „€" ein „¬".
+ * Betrifft auch frei eingegebene Texte (Verwendungszweck, Termin-/Teilbetrag-Grund).
+ */
+const LATIN1_ERSATZ: Record<string, string> = {
+  "–": "-", "—": "-", "‐": "-", "‑": "-", // – — ‐ ‑
+  "„": '"', "“": '"', "”": '"',                 // „ " "
+  "‚": "'", "‘": "'", "’": "'",                 // ‚ ' '
+  "…": "...", "€": "EUR", "•": "-", "→": "->", // … € • →
+  " ": " ",                                                // geschütztes Leerzeichen
+};
+
+function latin1Sicher(s: string): string {
+  return [...s]
+    .map((c) => LATIN1_ERSATZ[c] ?? ((c.codePointAt(0) ?? 0) <= 0xff ? c : "?"))
+    .join("");
+}
+
 function q(s: string): string {
-  // Latin-1-sichere Texte, DATEV: doppelte Anführungszeichen verdoppeln
-  return '"' + s.replace(/"/g, '""').replace(/[;\r\n]/g, " ") + '"';
+  // Erst auf Latin-1 reduzieren (Dateikodierung), dann DATEV-Escaping:
+  // doppelte Anführungszeichen verdoppeln, Feldtrenner/Zeilenumbrüche entschärfen.
+  const sicher = latin1Sicher(s).replace(/"/g, '""').replace(/[;\r\n]/g, " ");
+  return '"' + sicher + '"';
 }
 
 function betrag(v: string | number): string {
@@ -150,7 +172,7 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
       .map((v) => (v ?? "").trim())
       .filter(Boolean)
       .join(" · ");
-    if (kontext) text += ` – ${kontext}`;
+    if (kontext) text += ` - ${kontext}`;
   }
   if (b.trinkgeld != null && Number(b.trinkgeld) > 0) {
     text += ` zzgl. Trinkgeld ${betrag(b.trinkgeld)}`;
