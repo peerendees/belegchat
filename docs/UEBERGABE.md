@@ -1,6 +1,6 @@
 # BelegChat — Übergabe & Systemstand
 
-> **Stand: 19.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107 (Termin-Kontext Auswärts-Belege) live.
+> **Stand: 19.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107 (Termin-Kontext) + BER-108 (Teilbeträge) live.
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -35,6 +35,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 - Dashboard: Passkey-Auth (Multi-Passkey; NordPass-Fix `requireUserVerification:false`), Belegliste, Detail mit Audit-Trail, Freigabe mit SKR04-Korrektur, **Entwurf löschen** (Hash wird frei, Duplikatschutz bleibt)
 - **Bewirtung** (§ 4 Abs. 5 Nr. 2 EStG): Auto-Erkennung → Konto 6640 + `klaerungsbedarf`; Pflichtfelder Anlass/Teilnehmer bei Freigabe erzwungen; **Trinkgeld** als eigenes Feld (KI + manuell); **Deckblatt-PDF** (Kopfseite + Originalseiten) per Link in der Detailansicht
 - **Auswärts-Belege / Termin-Kontext** (BER-107, Verallgemeinerung des Bewirtungs-Musters): Auto-Erkennung Taxi/Bahn/ÖPNV → `beleg_typ auswaerts`, Konto **6860 Reisekosten**; Felder `termin_grund` (Pflicht → sonst `klaerungsbedarf`), `termin_ort`, `termin_kunde`; **Trinkgeld** generisch (Spalte `trinkgeld`, aus `bewirtung_trinkgeld` umbenannt); Termin-Kontext im DATEV-Buchungstext; **Termin-Deckblatt-PDF** (gemeinsamer Renderer mit Bewirtung)
+- **Teilbeträge** (BER-108): bei Rechnungsbelegen nur einen Teil buchen (brutto **oder** netto). `betrag_*` bleibt Dokumentbetrag (GoBD); `gebucht_brutto/netto/mwst` + `teilbetrag_basis/grund` tragen die Buchung; Erfassung im Freigabe-Formular mit Live-Split-Vorschau; DATEV bucht `COALESCE(gebucht_*, betrag_*)` mit Buchungstext „(Teilbetrag)"; Audit `teilbetrag_gebucht`; `gebucht_*` nach Festschreibung gesperrt. Ein MwSt-Satz pro Teilbetrag (v1)
 - DATEV-Export `/export` (Monat/Quartal/Jahr), Re-Download deterministisch; Trinkgeld erscheint im Buchungstext
 - GoBD: Festschreibung ab `geprueft`, append-only Audit, Hash-Duplikatschutz, `archived_at`; Verfahrensdoku: `docs/Verfahrensdokumentation_BelegChat_v1.0.docx` (BERENT-CI)
 
