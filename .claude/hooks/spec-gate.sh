@@ -11,8 +11,10 @@ if [[ -z "$COMMAND" ]]; then
   exit 0
 fi
 
-# Issue-Nummer aus der Commit-Message extrahieren
-ISSUE=$(echo "$INPUT" | grep -oE 'BER-[0-9]+' | head -1 || true)
+# Issue-Nummer NUR aus der Commit-Subject-Konvention "BER-NNN:" extrahieren
+# (CLAUDE.md-Format: "BER-[Nr]: [Was]"). Dadurch loest eine beilaeufige
+# Erwaehnung wie "kein BER-107-Regressionsfehler" die Spec-Pflicht NICHT aus.
+ISSUE=$(echo "$INPUT" | grep -oE 'BER-[0-9]+:' | head -1 | tr -d ':' || true)
 if [[ -z "$ISSUE" ]]; then
   exit 0
 fi
