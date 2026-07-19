@@ -20,7 +20,7 @@ export default async function BelegePage() {
            b.sachkonto, b.status, b.eingangskanal, b.verwendungszweck,
            (SELECT count(*)::int FROM beleg_seiten s WHERE s.beleg_id = b.id) AS seiten
       FROM belege b
-     ORDER BY b.created_at DESC`);
+     ORDER BY b.created_at DESC, b.id DESC`);
 
   const offen = belege.filter((b) =>
     ["vorschlag", "klaerungsbedarf"].includes(b.status as string)).length;
