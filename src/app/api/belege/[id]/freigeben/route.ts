@@ -24,8 +24,12 @@ export async function POST(
   const neuesSachkonto = body.sachkonto ? String(body.sachkonto).trim() : null;
   const anlass = body.bewirtung_anlass != null ? String(body.bewirtung_anlass).trim() : null;
   const teilnehmer = body.bewirtung_teilnehmer != null ? String(body.bewirtung_teilnehmer).trim() : null;
-  const trinkgeldRoh = body.bewirtung_trinkgeld != null ? String(body.bewirtung_trinkgeld).replace(",", ".").trim() : null;
+  const trinkgeldRoh = body.trinkgeld != null ? String(body.trinkgeld).replace(",", ".").trim() : null;
   const trinkgeld = trinkgeldRoh && !Number.isNaN(Number(trinkgeldRoh)) ? Number(trinkgeldRoh) : null;
+  // Termin-Kontext für Auswärts-Belege (Taxi/Bahn/ÖPNV) — BER-107
+  const terminGrund = body.termin_grund != null ? String(body.termin_grund).trim() : null;
+  const terminOrt = body.termin_ort != null ? String(body.termin_ort).trim() : null;
+  const terminKunde = body.termin_kunde != null ? String(body.termin_kunde).trim() : null;
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
@@ -44,13 +48,32 @@ export async function POST(
             UPDATE belege
                SET bewirtung_anlass = COALESCE(${anlass}, bewirtung_anlass),
                    bewirtung_teilnehmer = COALESCE(${teilnehmer}, bewirtung_teilnehmer),
-                   bewirtung_trinkgeld = COALESCE(${trinkgeld}, bewirtung_trinkgeld)
+                   trinkgeld = COALESCE(${trinkgeld}, trinkgeld)
              WHERE id = ${id}`;
         }
         const geprueft = await tx`
           SELECT bewirtung_anlass, bewirtung_teilnehmer FROM belege WHERE id = ${id}`;
         if (!geprueft[0].bewirtung_anlass || !geprueft[0].bewirtung_teilnehmer) {
           return { status: 422 as const, fehler: "Bewirtung: Anlass und Teilnehmer sind Pflichtangaben" };
+        }
+      }
+
+      // Auswärts-Beleg (Taxi/Bahn/ÖPNV): Grund ist Pflicht (betriebliche
+      // Veranlassung), Ort/Kunde optional. Trinkgeld auch hier möglich. — BER-107
+      if (beleg.beleg_typ === "auswaerts") {
+        if (terminGrund !== null || terminOrt !== null || terminKunde !== null || trinkgeld !== null) {
+          await tx`
+            UPDATE belege
+               SET termin_grund = COALESCE(${terminGrund}, termin_grund),
+                   termin_ort   = COALESCE(${terminOrt}, termin_ort),
+                   termin_kunde = COALESCE(${terminKunde}, termin_kunde),
+                   trinkgeld    = COALESCE(${trinkgeld}, trinkgeld)
+             WHERE id = ${id}`;
+        }
+        const geprueft = await tx`
+          SELECT termin_grund FROM belege WHERE id = ${id}`;
+        if (!geprueft[0].termin_grund) {
+          return { status: 422 as const, fehler: "Auswärts-Beleg: Grund des Termins ist Pflichtangabe" };
         }
       }
 

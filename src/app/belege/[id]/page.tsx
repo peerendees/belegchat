@@ -98,8 +98,8 @@ export default async function BelegDetailPage({
                   <dd>{(beleg.bewirtung_anlass as string) || "—"}</dd>
                   <dt className="text-muted-foreground">Bewirtung – Teilnehmer</dt>
                   <dd>{(beleg.bewirtung_teilnehmer as string) || "—"}</dd>
-                  <dt className="text-muted-foreground">Bewirtung – Trinkgeld</dt>
-                  <dd>{beleg.bewirtung_trinkgeld != null ? euro(beleg.bewirtung_trinkgeld) : "—"}</dd>
+                  <dt className="text-muted-foreground">Trinkgeld</dt>
+                  <dd>{beleg.trinkgeld != null ? euro(beleg.trinkgeld) : "—"}</dd>
                   {beleg.bewirtung_anlass && beleg.bewirtung_teilnehmer ? (
                     <>
                       <dt className="text-muted-foreground">Deckblatt</dt>
@@ -113,6 +113,18 @@ export default async function BelegDetailPage({
                       </dd>
                     </>
                   ) : null}
+                </>
+              ) : null}
+              {beleg.beleg_typ === "auswaerts" ? (
+                <>
+                  <dt className="text-muted-foreground">Termin – Grund</dt>
+                  <dd>{(beleg.termin_grund as string) || "—"}</dd>
+                  <dt className="text-muted-foreground">Termin – Ort</dt>
+                  <dd>{(beleg.termin_ort as string) || "—"}</dd>
+                  <dt className="text-muted-foreground">Termin – Kunde</dt>
+                  <dd>{(beleg.termin_kunde as string) || "—"}</dd>
+                  <dt className="text-muted-foreground">Trinkgeld</dt>
+                  <dd>{beleg.trinkgeld != null ? euro(beleg.trinkgeld) : "—"}</dd>
                 </>
               ) : null}
               <dt className="text-muted-foreground">GoBD-Hash</dt>
@@ -138,9 +150,13 @@ export default async function BelegDetailPage({
                   bezeichnung: k.bezeichnung as string,
                 }))}
                 istBewirtung={beleg.beleg_typ === "bewirtung"}
+                istAuswaerts={beleg.beleg_typ === "auswaerts"}
                 anlassInitial={(beleg.bewirtung_anlass as string) ?? ""}
                 teilnehmerInitial={(beleg.bewirtung_teilnehmer as string) ?? ""}
-                trinkgeldInitial={beleg.bewirtung_trinkgeld != null ? String(beleg.bewirtung_trinkgeld) : ""}
+                trinkgeldInitial={beleg.trinkgeld != null ? String(beleg.trinkgeld) : ""}
+                grundInitial={(beleg.termin_grund as string) ?? ""}
+                ortInitial={(beleg.termin_ort as string) ?? ""}
+                kundeInitial={(beleg.termin_kunde as string) ?? ""}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />

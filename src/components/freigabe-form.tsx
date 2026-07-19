@@ -12,23 +12,34 @@ export function FreigabeForm({
   aktuellesSachkonto,
   konten,
   istBewirtung = false,
+  istAuswaerts = false,
   anlassInitial = "",
   teilnehmerInitial = "",
   trinkgeldInitial = "",
+  grundInitial = "",
+  ortInitial = "",
+  kundeInitial = "",
 }: {
   belegId: string;
   aktuellesSachkonto: string;
   konten: Konto[];
   istBewirtung?: boolean;
+  istAuswaerts?: boolean;
   anlassInitial?: string;
   teilnehmerInitial?: string;
   trinkgeldInitial?: string;
+  grundInitial?: string;
+  ortInitial?: string;
+  kundeInitial?: string;
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
   const [anlass, setAnlass] = useState(anlassInitial);
   const [teilnehmer, setTeilnehmer] = useState(teilnehmerInitial);
   const [trinkgeld, setTrinkgeld] = useState(trinkgeldInitial);
+  const [grund, setGrund] = useState(grundInitial);
+  const [ort, setOrt] = useState(ortInitial);
+  const [kunde, setKunde] = useState(kundeInitial);
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -41,7 +52,14 @@ export function FreigabeForm({
       if (istBewirtung) {
         payload.bewirtung_anlass = anlass;
         payload.bewirtung_teilnehmer = teilnehmer;
-        if (trinkgeld.trim()) payload.bewirtung_trinkgeld = trinkgeld;
+      }
+      if (istAuswaerts) {
+        payload.termin_grund = grund;
+        payload.termin_ort = ort;
+        payload.termin_kunde = kunde;
+      }
+      if ((istBewirtung || istAuswaerts) && trinkgeld.trim()) {
+        payload.trinkgeld = trinkgeld;
       }
       const res = await fetch(`/api/belege/${belegId}/freigeben`, {
         method: "POST",
@@ -85,23 +103,69 @@ export function FreigabeForm({
               placeholder="Namen, kommagetrennt (inkl. eigener Person)"
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="trinkgeld">Trinkgeld in € (optional)</Label>
-            <input
-              id="trinkgeld"
-              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
-              value={trinkgeld}
-              onChange={(e) => setTrinkgeld(e.target.value)}
-              placeholder="z. B. 5,10 — falls nicht auf der Rechnung"
-              inputMode="decimal"
-            />
-          </div>
           <p className="text-xs text-amber-800">
             Ohne beide Angaben ist die Bewirtung steuerlich nicht abziehbar — bitte
             jetzt ausfüllen, solange die Erinnerung frisch ist.
           </p>
         </div>
       )}
+
+      {istAuswaerts && (
+        <div className="space-y-3 rounded-md bg-amber-50 p-3">
+          <p className="text-sm font-medium text-amber-900">
+            Auswärtstermin — Kontext erfassen (Nachweis der betrieblichen Veranlassung)
+          </p>
+          <div className="space-y-1">
+            <Label htmlFor="grund">Grund des Termins</Label>
+            <input
+              id="grund"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={grund}
+              onChange={(e) => setGrund(e.target.value)}
+              placeholder="z. B. Kundentermin, Baustellenbesichtigung, Messe"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ort">Ort (empfohlen)</Label>
+            <input
+              id="ort"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={ort}
+              onChange={(e) => setOrt(e.target.value)}
+              placeholder="z. B. Berlin, Kunde vor Ort"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="kunde">Kunde / Geschäftspartner (optional)</Label>
+            <input
+              id="kunde"
+              className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              value={kunde}
+              onChange={(e) => setKunde(e.target.value)}
+              placeholder="z. B. Firma Y"
+            />
+          </div>
+          <p className="text-xs text-amber-800">
+            Der Grund ist Pflicht — ohne ihn bleibt der Beleg in Klärung. Ort und
+            Kunde machen die Fahrt später nachvollziehbar.
+          </p>
+        </div>
+      )}
+
+      {(istBewirtung || istAuswaerts) && (
+        <div className="space-y-1">
+          <Label htmlFor="trinkgeld">Trinkgeld in € (optional)</Label>
+          <input
+            id="trinkgeld"
+            className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+            value={trinkgeld}
+            onChange={(e) => setTrinkgeld(e.target.value)}
+            placeholder="z. B. 5,10 — falls nicht auf der Rechnung"
+            inputMode="decimal"
+          />
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="sachkonto">Sachkonto (SKR04)</Label>
         <select
