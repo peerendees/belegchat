@@ -8,7 +8,6 @@ import postgres, { type TransactionSql } from "postgres";
  */
 
 declare global {
-  // eslint-disable-next-line no-var
   var __belegchatSql: ReturnType<typeof postgres> | undefined;
 }
 
@@ -23,8 +22,40 @@ function createClient() {
   });
 }
 
-export const sql = globalThis.__belegchatSql ?? createClient();
-if (process.env.NODE_ENV !== "production") globalThis.__belegchatSql = sql;
+// Lazy: Client erst beim ersten Zugriff erzeugen, nicht beim Modul-Import.
+// Der Next-Build ("Collecting page data") importiert jede Route und würde
+// sonst schon zur Build-Zeit `DASHBOARD_DB_URL` verlangen — die Variable
+// wird aber erst zur Laufzeit (erster Request) gebraucht. Memoisiert pro
+// Modul (Prod-Singleton) und über globalThis (überlebt Dev-HMR).
+let client: ReturnType<typeof postgres> | undefined;
+function getClient(): ReturnType<typeof postgres> {
+  if (client) return client;
+  client = globalThis.__belegchatSql ?? createClient();
+  if (process.env.NODE_ENV !== "production") globalThis.__belegchatSql = client;
+  return client;
+}
+
+// Proxy erhält die volle `postgres`-API (Tagged Template `sql\`…\``,
+// `sql.begin(…)` usw.), initialisiert den Client aber erst bei Benutzung.
+export const sql = new Proxy(
+  function () {} as unknown as ReturnType<typeof postgres>,
+  {
+    apply(_target, thisArg, args) {
+      return Reflect.apply(
+        getClient() as unknown as (...a: unknown[]) => unknown,
+        thisArg,
+        args,
+      );
+    },
+    get(_target, prop) {
+      const c = getClient();
+      const value = Reflect.get(c as object, prop);
+      return typeof value === "function"
+        ? (value as (...a: unknown[]) => unknown).bind(c)
+        : value;
+    },
+  },
+);
 
 export type Tx = TransactionSql;
 
