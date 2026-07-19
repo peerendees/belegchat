@@ -216,8 +216,24 @@ async function cmdWatch(args) {
     }
   }
 
-  await scan();
-  setInterval(scan, 5000);
+  // Scan-Lock: ein Tick wird übersprungen, solange der vorige Scan noch läuft.
+  // Ohne ihn starten die setInterval-Ticks parallele Scans, die unterschiedliche
+  // Dateien gleichzeitig importieren — das `busy`-Set schützt nur vor Doppel-
+  // verarbeitung derselben Datei. Folge waren KI-Rate-Limits (HTTP 500) und eine
+  // Race Condition bei der MAX-basierten Belegnummer (HTTP 409, unique constraint).
+  let scanLaeuft = false;
+  const tick = async () => {
+    if (scanLaeuft) return;
+    scanLaeuft = true;
+    try {
+      await scan();
+    } finally {
+      scanLaeuft = false;
+    }
+  };
+
+  await tick();
+  setInterval(tick, 5000);
 }
 
 const [, , cmd, ...args] = process.argv;
