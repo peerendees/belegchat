@@ -53,6 +53,7 @@ Vor dem Echtstart wurden **alle Test-/Aufbaudaten entfernt** (44 Belege, 41 Seit
 |-------|----------|
 | DATEV-Abnahme: realer Import beim StB (Format validiert die Kanzlei) | BER-96-Kommentare, `docs/DATEV.md` |
 | Kontierungsgedächtnis bauen, sobald SuSa/Kontenblätter 2024 vorliegen | [BER-98](https://linear.app/berent/issue/BER-98) |
+| **Termin-Kontext für Auswärts-Belege** (Taxi/Bahn/ÖPNV: Ort, Kunde, Grund, Trinkgeld — Verallgemeinerung des Bewirtungs-Musters; vollständig spezifiziert) | [BER-107](https://linear.app/berent/issue/BER-107) |
 | Echte Bewirtungs-Muster via Threema testen (Layout/OCR, Deckblatt mit Fotos) | BER-99 |
 | Landing-Feinschliff (Texte/Preise) | BER-22 |
 | Secret-Verifikationen (Threema-/Supabase-/Mistral-Keys nach Alt-Leak) | `SICHERHEIT.md` §0 |
