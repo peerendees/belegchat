@@ -19,11 +19,16 @@ export default async function ExportPage() {
     const offen = await tx`
       SELECT count(*)::int AS n, COALESCE(sum(betrag_brutto),0) AS summe
         FROM belege WHERE status = 'geprueft'`;
+    // Auswaehlbare Jahre aus den tatsaechlich vorhandenen Belegen ableiten —
+    // eine feste Spanne um das aktuelle Jahr schliesst aeltere Bestaende aus (BER-115).
+    const jahre = await tx`
+      SELECT DISTINCT extract(year from beleg_datum)::int AS jahr
+        FROM belege WHERE beleg_datum IS NOT NULL ORDER BY jahr DESC`;
     const exporte = await tx`
       SELECT id, buchungsjahr, monat, quartal, zeitraum_typ, anzahl_belege,
              gesamtbetrag_brutto, datei_pfad, created_at
         FROM datev_exporte ORDER BY created_at DESC LIMIT 25`;
-    return { offen: offen[0], exporte };
+    return { offen: offen[0], exporte, jahre: jahre.map((r) => r.jahr as number) };
   });
 
   return (
@@ -44,7 +49,7 @@ export default async function ExportPage() {
           <CardDescription>EXTF-Format (SKR04) für den ASCII-Import in DATEV Re:wesen</CardDescription>
         </CardHeader>
         <CardContent>
-          <ExportForm />
+          <ExportForm jahre={daten.jahre} />
         </CardContent>
       </Card>
 
