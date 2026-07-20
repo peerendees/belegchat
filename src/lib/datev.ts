@@ -112,8 +112,18 @@ function betrag(v: string | number): string {
 }
 
 function ttmm(isoDate: string): string {
+  // Explizite Zeitzone statt getDate()/getMonth(): Letztere richten sich nach der
+  // Laufzeit-Zeitzone. Ein reines DATE kommt als UTC-Mitternacht an — bei negativem
+  // UTC-Offset läge das Belegdatum im DATEV-Stapel dann einen Tag zurück.
   const d = new Date(isoDate);
-  return String(d.getDate()).padStart(2, "0") + String(d.getMonth() + 1).padStart(2, "0");
+  const t = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    day: "2-digit",
+    month: "2-digit",
+  }).formatToParts(d);
+  const teil = (typ: Intl.DateTimeFormatPartTypes) =>
+    t.find((x) => x.type === typ)?.value ?? "";
+  return teil("day") + teil("month");
 }
 
 /** Header-Zeile 1 (31 Felder) — Aufbau wie ERPNext-DATEV. */
