@@ -35,14 +35,19 @@ export default async function BelegDetailPage({
         FROM audit_log WHERE beleg_id = ${id} ORDER BY created_at, id`;
     // Nachbarn in Listenreihenfolge (created_at DESC, id DESC) — BER-112.
     // Zusammengesetzter Schlüssel, damit die Navigation auch bei gleichem
-    // created_at (Batch-Import) eindeutig und sprungfrei bleibt.
+    // created_at (Batch-Import) eindeutig bleibt.
+    //
+    // Der Vergleichswert wird bewusst NICHT über JavaScript gereicht:
+    // created_at hat in Postgres Mikrosekunden, ein JS-Date nur Millisekunden.
+    // Der gekürzte Wert erfüllte die '>'-Bedingung des eigenen Datensatzes —
+    // "vorheriger Beleg" zeigte dadurch auf den Beleg selbst.
     const vorher = await tx`
       SELECT id FROM belege
-       WHERE (created_at, id) > (${belege[0].created_at}, ${belege[0].id})
+       WHERE (created_at, id) > (SELECT created_at, id FROM belege WHERE id = ${id})
        ORDER BY created_at ASC, id ASC LIMIT 1`;
     const naechster = await tx`
       SELECT id FROM belege
-       WHERE (created_at, id) < (${belege[0].created_at}, ${belege[0].id})
+       WHERE (created_at, id) < (SELECT created_at, id FROM belege WHERE id = ${id})
        ORDER BY created_at DESC, id DESC LIMIT 1`;
     return {
       beleg: belege[0],
