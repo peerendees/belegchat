@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-export function ExportForm() {
+export function ExportForm({ jahre = [] }: { jahre?: number[] }) {
   const router = useRouter();
   const jetzt = new Date();
-  const [jahr, setJahr] = useState(jetzt.getFullYear());
+  // Auswahl: Jahre mit Belegen plus das laufende Jahr (fuer kuenftige Stapel).
+  const auswahlJahre = Array.from(new Set([...jahre, jetzt.getFullYear()])).sort((a, b) => b - a);
+  // Vorbelegt wird das juengste Jahr, fuer das es Belege gibt.
+  const [jahr, setJahr] = useState(jahre[0] ?? jetzt.getFullYear());
   const [typ, setTyp] = useState<"monat" | "quartal" | "jahr">("monat");
   const [monat, setMonat] = useState(jetzt.getMonth() + 1);
   const [quartal, setQuartal] = useState(Math.ceil((jetzt.getMonth() + 1) / 3));
@@ -57,7 +60,7 @@ export function ExportForm() {
         <div className="space-y-2">
           <Label>Jahr</Label>
           <select className={selectCls} value={jahr} onChange={(e) => setJahr(Number(e.target.value))}>
-            {[jetzt.getFullYear() - 1, jetzt.getFullYear(), jetzt.getFullYear() + 1].map((j) => (
+            {auswahlJahre.map((j) => (
               <option key={j} value={j}>{j}</option>
             ))}
           </select>
