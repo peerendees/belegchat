@@ -42,11 +42,23 @@
 | `docs/AUTH.md` | Auth (WebAuthn/Passkey) |
 | `docs/PDF-IMPORT.md` | PDF-Batch-Import |
 | `docs/DATEV.md` | DATEV-Export (Phase 4) |
+| `docs/SCHEMA.md` | DB-Schemaübersicht (Landkarte; Wahrheit: Migrationen im Schwesterrepo) |
 | `docs/POST-ALPHA-PLAN.md` | Hauptplan Phasen 0-4 |
 | `docs/UEBERGABE.md` | Session-Uebergabe |
 | `docs/TESTPLAN.md` | Testplan |
 | `docs/PFAD-MIGRATION.md` | Pfad-Migration |
 | `docs/ALPHA-HANDOFF.md` | Alpha-Handoff |
+| `docs/OFFENE-FRAGEN-STB.md` | Anschreiben an die Steuerkanzlei (Versandteil) + Antwort-Log |
+| `docs/FEATURE-WUENSCHE.md` | Feature-Wunsch-Registry (Vorstufe des Feature-Voting-Moduls F-01) |
+| `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md` | Nachtlauf S0–S7 + Morgen-Runbook M1–M6 zur StB-Rückmeldung |
+| `docs/verfahrensdoku/AENDERUNGEN-v1.1.md` | Ergänzungstexte für Verfahrensdoku v1.1 (entsteht im Nachtlauf, BER-118/119/121) |
+
+## Audits & Konzeption
+
+| Datei | Zweck |
+|-------|-------|
+| `docs/audits/2026-07-22-validierung-ber-116-119.md` | Validierungsbericht der Entwurfs-Specs (Zweitmodell) |
+| `docs/audits/2026-07-23-strukturpruefung-ausbaustufe.md` | Teil-A-Strukturprüfung: 9 Richtungen, 4 Pflichtfragen, Widerspruchsliste |
 
 ## Domain
 
@@ -60,6 +72,8 @@
 |------|-------|
 | `specs/TEMPLATE.md` | Story-Spec-Vorlage |
 | `specs/BER-XXX.md` | Einzelne Story-Specs |
+| `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116/117/118/119/121 (Spec-Anhang; Anwendung = Nachtlauf S1) |
+| `specs/migrations/20260723_trigger_tests.sql` | Verhaltens-Tests zur Migration (Rollback-Transaktion) |
 
 ## Journal
 
