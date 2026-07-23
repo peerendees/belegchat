@@ -23,15 +23,31 @@ export async function GET(
     const exporte = await tx`
       SELECT * FROM datev_exporte WHERE id = ${id} LIMIT 1`;
     if (exporte.length === 0) return null;
+    const exp = exporte[0];
+    // Eingefrorene Fassung braucht keine Belege — die Bytes liegen gespeichert vor.
+    if (exp.datei_inhalt) return { exp, belege: null };
     const belege = await tx`
       SELECT beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck,
              trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto, stb_vermerk,
              gegenkonto, bu_schluessel
         FROM belege WHERE datev_export_id = ${id}
        ORDER BY beleg_datum, beleg_nr`;
-    return { exp: exporte[0], belege };
+    return { exp, belege };
   });
   if (!daten) return NextResponse.json({ error: "Export nicht gefunden" }, { status: 404 });
+
+  // Eingefrorene Fassung (BER-121): gespeicherten Inhalt bitgleich ausliefern —
+  // unabhängig von späteren Änderungen an Belegen oder Firmenkonfiguration.
+  if (daten.exp.datei_inhalt) {
+    const bytes = daten.exp.datei_inhalt as Buffer;
+    return new NextResponse(new Uint8Array(bytes), {
+      status: 200,
+      headers: {
+        "Content-Type": "text/csv; charset=windows-1252",
+        "Content-Disposition": `attachment; filename="${daten.exp.datei_pfad as string}"`,
+      },
+    });
+  }
 
   const firma = await sql`
     SELECT f.datev_berater_nr, f.datev_mandant_nr, f.datev_gegenkonto

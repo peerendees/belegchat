@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { sql, withMandant } from "@/lib/db";
@@ -61,14 +62,33 @@ export async function POST(req: NextRequest) {
          WHERE status = 'geprueft' AND beleg_datum BETWEEN ${von} AND ${bis}`;
 
       const dateiName = extfDateiname(jahr, zeitraumLabel);
+      // CSV im selben Moment erzeugen, der als created_at gespeichert wird — so
+      // sind Header-Zeitstempel und DB-Zeitstempel identisch und der Re-Download
+      // liefert die eingefrorenen Bytes bitgleich aus (BER-121).
+      const erzeugt = new Date();
+      const csv = generateExtf(belege as unknown as DatevBeleg[], {
+        beraterNr: firma[0].datev_berater_nr as number | null,
+        mandantNr: firma[0].datev_mandant_nr as number | null,
+        gegenkonto: firma[0].datev_gegenkonto as string,
+        wjBeginn: `${jahr}0101`,
+        von: von.replaceAll("-", ""),
+        bis: bis.replaceAll("-", ""),
+        bezeichnung: `BelegChat ${jahr} ${zeitraumLabel}`,
+        erzeugtAm: erzeugt,
+        exporterName: session.threemaId,
+      });
+      const hash = createHash("sha256").update(csv).digest("hex");
+
       const exporte = await tx`
         INSERT INTO datev_exporte
           (buchungsjahr, monat, quartal, zeitraum_von, zeitraum_bis, zeitraum_typ,
            anzahl_belege, gesamtbetrag_brutto, gesamtbetrag_netto, gesamtbetrag_mwst,
-           datei_pfad, status, mandant_id)
+           datei_pfad, status, mandant_id,
+           datei_inhalt, inhalts_hash, eingefroren_am, datei_groesse_bytes, created_at)
         VALUES (${jahr}, ${monat}, ${quartal}, ${von}, ${bis}, ${zeitraumTyp},
                 ${belege.length}, ${summen[0].brutto}, ${summen[0].netto}, ${summen[0].mwst},
-                ${dateiName}, 'erstellt', ${session.mandantId})
+                ${dateiName}, 'erstellt', ${session.mandantId},
+                ${csv}, ${hash}, ${erzeugt}, ${csv.length}, ${erzeugt})
         RETURNING id`;
       const exportId = exporte[0].id as string;
 
@@ -82,7 +102,7 @@ export async function POST(req: NextRequest) {
         SELECT b.id, ${session.mandantId}, 'export', 'geprueft', ${dateiName}
           FROM belege b WHERE b.id = ANY(${ids})`;
 
-      return { exportId, dateiName, belege };
+      return { exportId, dateiName, csv, anzahl: belege.length };
     });
 
     if (!result) {
@@ -90,25 +110,13 @@ export async function POST(req: NextRequest) {
         { error: "Keine freigegebenen Belege im Zeitraum" }, { status: 404 });
     }
 
-    const csv = generateExtf(result.belege as unknown as DatevBeleg[], {
-      beraterNr: firma[0].datev_berater_nr as number | null,
-      mandantNr: firma[0].datev_mandant_nr as number | null,
-      gegenkonto: firma[0].datev_gegenkonto as string,
-      wjBeginn: `${jahr}0101`,
-      von: von.replaceAll("-", ""),
-      bis: bis.replaceAll("-", ""),
-      bezeichnung: `BelegChat ${jahr} ${zeitraumLabel}`,
-      erzeugtAm: new Date(),
-      exporterName: session.threemaId,
-    });
-
-    return new NextResponse(new Uint8Array(csv), {
+    return new NextResponse(new Uint8Array(result.csv), {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=windows-1252",
         "Content-Disposition": `attachment; filename="${result.dateiName}"`,
         "X-Export-Id": result.exportId,
-        "X-Anzahl-Belege": String(result.belege.length),
+        "X-Anzahl-Belege": String(result.anzahl),
       },
     });
   } catch (e) {

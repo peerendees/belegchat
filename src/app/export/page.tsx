@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { withMandant } from "@/lib/db";
 import { euro, datumZeit } from "@/lib/format";
 import { ExportForm } from "@/components/export-form";
+import { KorrekturButton } from "@/components/korrektur-button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -26,7 +27,8 @@ export default async function ExportPage() {
         FROM belege WHERE beleg_datum IS NOT NULL ORDER BY jahr DESC`;
     const exporte = await tx`
       SELECT id, buchungsjahr, monat, quartal, zeitraum_typ, anzahl_belege,
-             gesamtbetrag_brutto, datei_pfad, created_at
+             gesamtbetrag_brutto, datei_pfad, created_at,
+             version, status, inhalts_hash, korrektur_grund
         FROM datev_exporte ORDER BY created_at DESC LIMIT 25`;
     return { offen: offen[0], exporte, jahre: jahre.map((r) => r.jahr as number) };
   });
@@ -56,7 +58,10 @@ export default async function ExportPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Bisherige Exporte</CardTitle>
-          <CardDescription>Erneuter Download regeneriert die Datei aus den festgeschriebenen Belegen</CardDescription>
+          <CardDescription>
+            Erneuter Download liefert die gespeicherte Datei bitgleich (Inhalts-Hash je Fassung).
+            Korrekturfassungen ersetzen nicht still, sondern bleiben als eigene Version nachvollziehbar.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -64,31 +69,70 @@ export default async function ExportPage() {
               <TableRow>
                 <TableHead>Erstellt</TableHead>
                 <TableHead>Zeitraum</TableHead>
+                <TableHead>Fassung</TableHead>
                 <TableHead className="text-right">Belege</TableHead>
                 <TableHead className="text-right">Brutto</TableHead>
                 <TableHead>Datei</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {daten.exporte.map((e) => (
-                <TableRow key={e.id as string}>
-                  <TableCell className="whitespace-nowrap">{datumZeit(e.created_at)}</TableCell>
-                  <TableCell>
-                    {e.buchungsjahr as number}{" "}
-                    {e.monat ? `M${String(e.monat).padStart(2, "0")}` : e.quartal ? `Q${e.quartal}` : "Jahr"}
-                  </TableCell>
-                  <TableCell className="text-right">{e.anzahl_belege as number}</TableCell>
-                  <TableCell className="text-right">{euro(e.gesamtbetrag_brutto)}</TableCell>
-                  <TableCell>
-                    <a href={`/api/datev/export/${e.id}`} className="underline underline-offset-2">
-                      {e.datei_pfad as string}
-                    </a>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {daten.exporte.map((e) => {
+                const ersetzt = e.status === "ersetzt";
+                return (
+                  <TableRow key={e.id as string} className={ersetzt ? "opacity-50" : ""}>
+                    <TableCell className="whitespace-nowrap">{datumZeit(e.created_at)}</TableCell>
+                    <TableCell>
+                      {e.buchungsjahr as number}{" "}
+                      {e.monat ? `M${String(e.monat).padStart(2, "0")}` : e.quartal ? `Q${e.quartal}` : "Jahr"}
+                    </TableCell>
+                    <TableCell>
+                      v{e.version as number}
+                      {(e.version as number) > 1 ? " (Korrektur)" : ""}
+                      {e.korrektur_grund ? (
+                        <span
+                          className="block max-w-[160px] truncate text-xs text-muted-foreground"
+                          title={e.korrektur_grund as string}
+                        >
+                          {e.korrektur_grund as string}
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-right">{e.anzahl_belege as number}</TableCell>
+                    <TableCell className="text-right">{euro(e.gesamtbetrag_brutto)}</TableCell>
+                    <TableCell>
+                      <a href={`/api/datev/export/${e.id}`} className="underline underline-offset-2">
+                        {e.datei_pfad as string}
+                      </a>
+                      {e.inhalts_hash ? (
+                        <span className="block font-mono text-[10px] text-muted-foreground">
+                          sha256:{(e.inhalts_hash as string).slice(0, 16)}…
+                        </span>
+                      ) : null}
+                      {!ersetzt ? (
+                        <KorrekturButton
+                          exportId={e.id as string}
+                          vorschlagGrund="Nacherfassung Zahlungsweg/Steuerschlüssel nach StB-Rückmeldung vom 22.07.2026"
+                        />
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={
+                          ersetzt
+                            ? "rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-700"
+                            : "rounded bg-green-100 px-2 py-0.5 text-xs text-green-800"
+                        }
+                      >
+                        {ersetzt ? "ersetzt" : (e.status as string)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {daten.exporte.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Noch keine Exporte
                   </TableCell>
                 </TableRow>
