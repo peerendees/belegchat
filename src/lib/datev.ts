@@ -23,6 +23,8 @@ export type DatevBeleg = {
   gegenkonto?: string | null;
   // DATEV-BU-/Steuerschlüssel (BER-117), Spalte 9; NULL = ohne Schlüssel.
   bu_schluessel?: string | null;
+  // Beleg ohne Originaldokument erfasst (BER-118) → Kennzeichnung im Stapel.
+  dokument_fehlt?: boolean | null;
 };
 
 export type DatevMeta = {
@@ -212,6 +214,18 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
     if (artIdx >= 0) {
       row[artIdx] = q("Hinweis");
       row[artIdx + 1] = q(b.stb_vermerk.slice(0, 210)); // DATEV: max. 210 Zeichen
+    }
+  }
+
+  // Beleg ohne Originaldokument (BER-118): eigenes Zusatzinformations-Feld, damit
+  // der Steuerberater die noch offene Nachreichung im Stapel erkennt.
+  if (b.dokument_fehlt) {
+    const artIdx = (TRANSACTION_COLUMNS as readonly string[]).indexOf(
+      "Zusatzinformation - Art 2",
+    );
+    if (artIdx >= 0) {
+      row[artIdx] = q("Beleg");
+      row[artIdx + 1] = q("fehlt bei Übergabe");
     }
   }
 

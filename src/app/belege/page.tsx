@@ -11,16 +11,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const dynamic = "force-dynamic";
 
-export default async function BelegePage() {
+export default async function BelegePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dokument?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const nurFehlt = (await searchParams).dokument === "fehlt";
 
-  const belege = await withMandant(session.mandantId, (tx) => tx`
-    SELECT b.id, b.beleg_nr, b.beleg_datum, b.beleg_typ, b.betrag_brutto,
-           b.sachkonto, b.status, b.eingangskanal, b.verwendungszweck, b.zahlungsweg,
-           (SELECT count(*)::int FROM beleg_seiten s WHERE s.beleg_id = b.id) AS seiten
-      FROM belege b
-     ORDER BY b.created_at DESC, b.id DESC`);
+  const daten = await withMandant(session.mandantId, async (tx) => {
+    const belege = await tx`
+      SELECT b.id, b.beleg_nr, b.beleg_datum, b.beleg_typ, b.betrag_brutto,
+             b.sachkonto, b.status, b.eingangskanal, b.verwendungszweck, b.zahlungsweg,
+             b.dokument_fehlt,
+             (SELECT count(*)::int FROM beleg_seiten s WHERE s.beleg_id = b.id) AS seiten
+        FROM belege b
+       ${nurFehlt ? tx`WHERE b.dokument_fehlt` : tx``}
+       ORDER BY b.created_at DESC, b.id DESC`;
+    const fehlt = await tx`SELECT count(*)::int AS n FROM belege WHERE dokument_fehlt`;
+    return { belege, fehltCount: fehlt[0].n as number };
+  });
+  const belege = daten.belege;
 
   const offen = belege.filter((b) =>
     ["vorschlag", "klaerungsbedarf"].includes(b.status as string)).length;
@@ -37,6 +49,12 @@ export default async function BelegePage() {
         </div>
         <div className="flex items-center gap-2">
           <Link
+            href="/belege/neu"
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            Neuer Beleg
+          </Link>
+          <Link
             href="/export"
             className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
           >
@@ -48,8 +66,27 @@ export default async function BelegePage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Alle Belege</CardTitle>
-          <CardDescription>Klick auf eine Zeile öffnet die Detailansicht</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">
+                {nurFehlt ? "Belege ohne Dokument" : "Alle Belege"}
+              </CardTitle>
+              <CardDescription>Klick auf eine Zeile öffnet die Detailansicht</CardDescription>
+            </div>
+            {daten.fehltCount > 0 &&
+              (nurFehlt ? (
+                <Link href="/belege" className="text-sm underline underline-offset-2">
+                  Alle anzeigen
+                </Link>
+              ) : (
+                <Link
+                  href="/belege?dokument=fehlt"
+                  className="text-sm text-amber-800 underline underline-offset-2"
+                >
+                  Dokument fehlt ({daten.fehltCount})
+                </Link>
+              ))}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -99,6 +136,14 @@ export default async function BelegePage() {
                     >
                       {STATUS_LABELS[b.status as string] ?? (b.status as string)}
                     </span>
+                    {b.dokument_fehlt ? (
+                      <span
+                        className="ml-1 rounded bg-red-100 px-2 py-0.5 text-xs text-red-800"
+                        title="Beleg ohne Originaldokument — Nachreichung offen"
+                      >
+                        ⚠ Beleg fehlt
+                      </span>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}

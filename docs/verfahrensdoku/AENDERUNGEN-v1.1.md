@@ -37,5 +37,18 @@ Die Unveränderbarkeit festgeschriebener Belege wird ab 23.07.2026 über eine Po
 benannten, kleinen Ausnahmeliste (Statuswechsel zur Exportkennzeichnung, die genannten
 einmaligen Ergänzungen). Damit ist auch jedes künftig hinzukommende Feld automatisch geschützt.
 
-<!-- Ä-4 (Beleg ohne Dokument erfassen / Dokument nachreichen, BER-118) wird mit der
-     BER-118-Umsetzung ergänzt. -->
+## Ä-4 · Buchungsbeleg ohne Originaldokument erfassen und nachreichen (BER-118)
+
+Ein Buchungsbeleg kann ohne vorliegendes Originaldokument erfasst und freigegeben werden, damit
+ein Stapel übergeben werden kann, in dem noch auf einzelne Belege gewartet wird. Solche Belege
+sind als „Dokument fehlt" gekennzeichnet — im Dashboard sichtbar/filterbar und im DATEV-Stapel in
+den Zusatzinformations-Feldern als „Beleg: fehlt bei Übergabe".
+
+Das Originaldokument wird später nachgereicht: genau **eine** Datei (mehrseitig als PDF), die über
+denselben revisionssicheren Weg wie der automatische Eingang archiviert wird (SHA-256, Storage,
+Duplikatprüfung). Das Nachreichen ist auch nach Freigabe/Export möglich (der Beleg-Trigger erlaubt
+`gobd_hash`/`bild_storage_path` einmalig von „leer" auf einen Wert); ein bereits hinterlegtes
+Dokument lässt sich nicht ersetzen. Jede Nachreichung steht im unveränderlichen Audit-Protokoll
+(`dokument_nachgereicht`). Der Steuerberater-Vermerk am Beleg bleibt nach der Festschreibung
+unverändert — die Nachreichung wird nicht in den Vermerk fortgeschrieben, sondern über Kennzeichen
+und Protokoll dokumentiert.

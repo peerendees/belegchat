@@ -60,7 +60,7 @@ async function belegeFuerExport(tx: Tx, wurzelId: string) {
   return tx`
     SELECT beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck,
            trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto, stb_vermerk,
-           gegenkonto, bu_schluessel
+           gegenkonto, bu_schluessel, dokument_fehlt
       FROM belege WHERE datev_export_id = ${wurzelId}
      ORDER BY beleg_datum, beleg_nr`;
 }

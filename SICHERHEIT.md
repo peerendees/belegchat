@@ -133,6 +133,12 @@ ALLOWED_ORIGIN=                # optional, leer lassen bei Server-zu-Server
 > `Authorization: Bearer {{ $env.DECRYPT_API_TOKEN }}` mitsenden (bei „Nachricht
 > entschlüsseln" und „Blob entschlüsseln"). Beim Re-Import bitte ergänzen.
 
+> **BER-118 (23.07.2026):** Auch die Dashboard-Route `POST /api/belege/[id]/dokument`
+> ruft die Edge-Action `archive-beleg-*` serverseitig mit demselben Token auf. Dafür
+> muss `DECRYPT_API_TOKEN` in der **Vercel-Umgebung** des `belegchat`-Projekts gesetzt
+> sein (`.env.local` lokal). Der Token bleibt server-only (Route-Handler), erscheint
+> nie im Client. → Runbook-Schritt M1.
+
 ---
 
 ## 4. Noch offen / empfohlen
