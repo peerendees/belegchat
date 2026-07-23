@@ -79,3 +79,22 @@ wurde; **was sich geändert hat, ist über das Korrektur-Protokoll lückenlos be
 erzeugte Korrekturstapel wird mit Inhalt und SHA-256 revisionssicher gespeichert (BER-121). Für
 2025/2026 wird zusätzlich die Belegnummern-Vergabe auf das Belegjahr umgestellt, sodass der Versatz
 gar nicht mehr entsteht.
+
+### Ä-5.1 · Angleich an die geprüften Rechnungssätze + Zahlungsweg-Zuordnung (23.07.2026)
+
+Auf Basis einer vom Betreiber geführten, geprüften Referenzliste (`Rechnungssaetze_2024.csv`, je
+Beleg über den GoBD-Hash eindeutig zugeordnet) wurden zwei weitere Berichtigungen am 2024-Bestand
+vorgenommen:
+
+1. **OCR-Korrekturen** an 9 Beträgen und 5 Sachkonten, die von der geprüften Referenz abwichen
+   (u. a. zwei Vodafone-DSL-Belege, deren Betrag die OCR negativ und falsch erfasst hatte; mehrere
+   Mobilfunk-Belege 42,13 € → 37,13 €). Kontrollierter Eingriff wie in Ä-5, `korrektur_vorabgabe`
+   im Protokoll (alter → neuer Wert je Beleg).
+2. **Zahlungsweg-Zuordnung** aller 60 Belege (Nacherfassung, `NULL → Wert`, Schutz-Trigger aktiv):
+   36 Geschäftskonto (1800), 24 Alternativkonto (1810, Abgrenzung: private Karte/Barzahlung),
+   Steuerschlüssel je MwSt-Satz (90/80). `nacherfassung_zahlungsweg`/`_steuerschluessel` im Protokoll.
+
+Abgrenzung: Die 16 Belege außerhalb der Referenzliste wurden nur im Zahlungsweg zugeordnet; ihre
+Beträge stammen aus der OCR-Erfassung und sind vom Betreiber gegen die Originalbelege zu
+plausibilisieren. Insgesamt 199 Protokolleinträge; der Bestand ist danach deckungsgleich mit der
+geprüften Referenz.
