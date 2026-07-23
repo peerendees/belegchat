@@ -111,3 +111,12 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `docs/components/api.md` | API-Komponente |
 | `docs/components/db.md` | Datenbank-Komponente |
 | `specs/TEMPLATE.md` | Story-Spec-Template |
+| `docs/SCHEMA.md` | DB-Schemaübersicht (Landkarte zu den Migrationen im Schwesterrepo) |
+| `docs/OFFENE-FRAGEN-STB.md` | Anschreiben Steuerkanzlei (Versandteil) + Antwort-Log |
+| `docs/FEATURE-WUENSCHE.md` | Feature-Wunsch-Registry (Vorstufe Feature-Voting-Modul) |
+| `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md` | Nachtlauf + Morgen-Runbook StB-Rückmeldung |
+| `docs/audits/2026-07-22-validierung-ber-116-119.md` | Validierungsbericht Entwurfs-Specs |
+| `docs/audits/2026-07-23-strukturpruefung-ausbaustufe.md` | Strukturprüfung nächste Ausbaustufe (Teil A) |
+| `docs/verfahrensdoku/AENDERUNGEN-v1.1.md` | Verfahrensdoku-Ergänzungen v1.1 (entsteht im Nachtlauf) |
+| `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116..119/121 (Spec-Anhang) |
+| `specs/migrations/20260723_trigger_tests.sql` | Trigger-Verhaltenstests (Rollback-Transaktion) |
