@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { withMandant } from "@/lib/db";
+import { sql, withMandant } from "@/lib/db";
+
+const ZAHLUNGSWEGE = ["geschaeftskonto", "alternativkonto", "privat"] as const;
 
 /**
  * Freigabe eines Belegs: vorschlag/klaerungsbedarf → geprueft.
@@ -42,6 +44,34 @@ export async function POST(
   const teilbetragGrund = body.teilbetrag_grund != null ? String(body.teilbetrag_grund).trim() : null;
   // Vermerk für den Steuerberater (BER-109) — bei Freigabe bestätig-/änderbar.
   const stbVermerk = body.stb_vermerk != null ? String(body.stb_vermerk).trim() : null;
+
+  // Zahlungsweg (BER-116): Pflichtauswahl ohne Vorbelegung. Ein vergessenes
+  // Häkchen erzeugt genau den vom StB gemeldeten Abgleichsfehler — deshalb 422
+  // statt eines stillen Defaults.
+  const zahlungsweg =
+    typeof body.zahlungsweg === "string" &&
+    (ZAHLUNGSWEGE as readonly string[]).includes(body.zahlungsweg)
+      ? (body.zahlungsweg as (typeof ZAHLUNGSWEGE)[number])
+      : null;
+  if (!zahlungsweg) {
+    return NextResponse.json(
+      { error: "Zahlungsweg ist Pflicht: Geschäftskonto, anderes Konto oder privat verauslagt" },
+      { status: 422 },
+    );
+  }
+  const firma = await sql`
+    SELECT f.datev_gegenkonto, f.datev_gegenkonto_alternativ, f.datev_gegenkonto_privat
+      FROM mandanten m JOIN firmen f ON f.firma_nr = m.firma_nr
+     WHERE m.id = ${session.mandantId}`;
+  if (firma.length === 0) {
+    return NextResponse.json({ error: "Firma nicht gefunden" }, { status: 404 });
+  }
+  const gegenkonto =
+    zahlungsweg === "geschaeftskonto"
+      ? (firma[0].datev_gegenkonto as string)
+      : zahlungsweg === "alternativkonto"
+        ? (firma[0].datev_gegenkonto_alternativ as string)
+        : (firma[0].datev_gegenkonto_privat as string);
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
@@ -145,6 +175,16 @@ export async function POST(
              SET sachkonto = ${neuesSachkonto}, sachkonto_manuell_geaendert = true
            WHERE id = ${id}`;
       }
+
+      // Zahlungsweg + aufgelöstes Gegenkonto festschreiben (BER-116), solange der
+      // Beleg noch offen ist; der Export nimmt das Gegenkonto danach vom Beleg.
+      await tx`
+        UPDATE belege SET zahlungsweg = ${zahlungsweg}, gegenkonto = ${gegenkonto}
+         WHERE id = ${id}`;
+      await tx`
+        INSERT INTO audit_log (beleg_id, mandant_id, aktion, alter_wert, neuer_wert)
+        VALUES (${id}, ${session.mandantId}, 'zahlungsweg_gesetzt', null,
+                ${`${zahlungsweg} → ${gegenkonto}`})`;
 
       await tx`
         UPDATE belege

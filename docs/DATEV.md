@@ -15,7 +15,10 @@
 ## Buchungslogik (bewusst einfach — StB verarbeitet weiter)
 
 - **Umsatz** = `betrag_brutto` · **S/H**: `S`, bei `gutschrift`/`ausgangsrechnung` `H`
-- **Konto** = SKR04-`sachkonto` des Belegs · **Gegenkonto** = `firmen.datev_gegenkonto` (Default `1800` Bank)
+- **Konto** = SKR04-`sachkonto` des Belegs · **Gegenkonto** = `belege.gegenkonto`, bei der Freigabe
+  aus dem Zahlungsweg aufgelöst (1800 Geschäftskonto / 1810 andere Karte/Konto / 2100 privat
+  verauslagt, BER-116); Fallback auf die Firmenkonstante `firmen.datev_gegenkonto` nur für Altbestand
+  ohne Wert (bis BER-119 nacherfasst hat)
 - **BU-Schlüssel leer** — Steuer läuft über SKR04-Automatikkonten bzw. wird vom StB gesetzt
 - **Belegdatum** TTMM · **Belegfeld 1** = Beleg-Nr · **Buchungstext** = Verwendungszweck (60 Zeichen)
 - Header-Festschreibung = 0 (Festschreibung passiert beim StB-Import)
@@ -27,7 +30,10 @@
    → `datev_exporte`-Zeile (Anzahl, Summen, Dateiname) → Belege `geprueft → exportiert`
    (+ `datev_export_id`, `export_datum`) → Audit `export` je Beleg
 3. **Re-Download** über die Export-Liste: Datei wird deterministisch aus den festgeschriebenen
-   Belegen regeneriert (kein Datei-Storage nötig; nur der „erzeugt am"-Zeitstempel im Header variiert)
+   Belegen regeneriert. Das Gegenkonto kommt seit BER-116 aus dem Beleg (`belege.gegenkonto`), nicht
+   mehr aus der zur Downloadzeit gelesenen Firmenkonfiguration — die frühere Aussage „nur der
+   ‚erzeugt am'-Zeitstempel variiert" war falsch (variabel war die Firmenkonfiguration).
+   BER-121 speichert zusätzlich den ausgelieferten Dateiinhalt samt SHA-256 und liefert ihn bitgleich aus.
 
 Belege ohne `beleg_datum` werden nicht exportiert (bleiben `geprueft`, im nächsten passenden Zeitraum prüfen).
 

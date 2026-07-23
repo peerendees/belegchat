@@ -51,3 +51,12 @@ export const STATUS_LABELS: Record<string, string> = {
   geprueft: "Geprüft",
   exportiert: "Exportiert",
 };
+
+// Zahlungsweg → Gegenkonto (BER-116). Kurzform für die Belegliste, Langform für
+// die Detailansicht. Die konkreten Konten stehen an der Firma (1800/1810/2100),
+// hier nur die fachliche Bezeichnung.
+export const ZAHLUNGSWEG_LABELS: Record<string, { kurz: string; lang: string }> = {
+  geschaeftskonto: { kurz: "GK", lang: "Geschäftskonto" },
+  alternativkonto: { kurz: "AK", lang: "Andere Karte/Konto" },
+  privat: { kurz: "PR", lang: "Privat verauslagt" },
+};
