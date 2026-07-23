@@ -6,6 +6,7 @@ import { euro, datum, datumZeit, STATUS_LABELS, ZAHLUNGSWEG_LABELS } from "@/lib
 import { FreigabeForm } from "@/components/freigabe-form";
 import { LoeschenButton } from "@/components/loeschen-button";
 import { BelegNavigation } from "@/components/beleg-navigation";
+import { DokumentUpload } from "@/components/dokument-upload";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -110,6 +111,11 @@ export default async function BelegDetailPage({
         </div>
         <div className="flex items-center gap-3">
           <BelegNavigation vorherId={vorherId} naechsterId={naechsterId} />
+          {beleg.dokument_fehlt ? (
+            <span className="rounded bg-red-100 px-3 py-1 text-sm text-red-800">
+              ⚠ Dokument fehlt
+            </span>
+          ) : null}
           <span
             className={
               offen
@@ -283,6 +289,8 @@ export default async function BelegDetailPage({
               </CardContent>
             </Card>
           )}
+
+          {seiten.length === 0 ? <DokumentUpload belegId={id} /> : null}
 
           <Card>
             <CardHeader className="pb-2">
