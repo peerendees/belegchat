@@ -21,6 +21,8 @@ export type DatevBeleg = {
   // Am Beleg festgeschriebenes Gegenkonto (BER-116); Fallback auf die
   // Firmenkonstante nur für Altbestand ohne Wert.
   gegenkonto?: string | null;
+  // DATEV-BU-/Steuerschlüssel (BER-117), Spalte 9; NULL = ohne Schlüssel.
+  bu_schluessel?: string | null;
 };
 
 export type DatevMeta = {
@@ -179,6 +181,9 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   // Gegenkonto (ohne BU): am Beleg festgeschriebenes Konto (BER-116),
   // Fallback auf die Firmenkonstante nur für Altbestand ohne Wert.
   row[7] = b.gegenkonto ?? meta.gegenkonto;
+  // BU-Schlüssel (Spalte 9, Index 8): Vorsteuerschlüssel je Beleg (BER-117);
+  // leer bei Belegen ohne Vorsteuer. Numerisches Feld — unquoted wie Konto.
+  row[8] = b.bu_schluessel ?? "";
   row[9] = ttmm(b.beleg_datum);            // Belegdatum TTMM
   row[10] = q(b.beleg_nr.slice(0, 36));    // Belegfeld 1
   let text = b.verwendungszweck || b.beleg_nr;

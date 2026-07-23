@@ -26,7 +26,7 @@ export async function GET(
     const belege = await tx`
       SELECT beleg_nr, beleg_datum, beleg_typ, betrag_brutto, sachkonto, verwendungszweck,
              trinkgeld, termin_grund, termin_ort, termin_kunde, gebucht_brutto, stb_vermerk,
-             gegenkonto
+             gegenkonto, bu_schluessel
         FROM belege WHERE datev_export_id = ${id}
        ORDER BY beleg_datum, beleg_nr`;
     return { exp: exporte[0], belege };

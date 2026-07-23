@@ -44,6 +44,11 @@ export async function POST(
   const teilbetragGrund = body.teilbetrag_grund != null ? String(body.teilbetrag_grund).trim() : null;
   // Vermerk für den Steuerberater (BER-109) — bei Freigabe bestätig-/änderbar.
   const stbVermerk = body.stb_vermerk != null ? String(body.stb_vermerk).trim() : null;
+  // Steuerschlüssel (BER-117): leerer/fehlender Wert → NULL (kein Schlüssel).
+  const buSchluessel =
+    body.bu_schluessel != null && String(body.bu_schluessel).trim() !== ""
+      ? String(body.bu_schluessel).trim()
+      : null;
 
   // Zahlungsweg (BER-116): Pflichtauswahl ohne Vorbelegung. Ein vergessenes
   // Häkchen erzeugt genau den vom StB gemeldeten Abgleichsfehler — deshalb 422
@@ -174,6 +179,32 @@ export async function POST(
           UPDATE belege
              SET sachkonto = ${neuesSachkonto}, sachkonto_manuell_geaendert = true
            WHERE id = ${id}`;
+      }
+
+      // Steuerschlüssel (BER-117): gegen die Firmen-Konfiguration prüfen, Gate über
+      // vorsteuer_relevant des (ggf. geänderten) Sachkontos. Nur bei Wahl setzen.
+      if (buSchluessel !== null) {
+        const finalSachkonto = neuesSachkonto ?? (beleg.sachkonto as string);
+        const gueltig = await tx`
+          SELECT 1 FROM steuerschluessel s
+            JOIN mandanten m ON m.firma_nr = s.firma_nr
+           WHERE m.id = ${session.mandantId} AND s.typ = 'vorsteuer' AND s.aktiv
+             AND s.bu_schluessel = ${buSchluessel} LIMIT 1`;
+        if (gueltig.length === 0) {
+          return { status: 422 as const, fehler: "Unbekannter Steuerschlüssel" };
+        }
+        const vst = await tx`
+          SELECT vorsteuer_relevant FROM skr04_konten WHERE konto_nr = ${finalSachkonto} LIMIT 1`;
+        if (vst[0]?.vorsteuer_relevant !== true) {
+          return {
+            status: 422 as const,
+            fehler: "Steuerschlüssel nur bei vorsteuerrelevantem Sachkonto",
+          };
+        }
+        await tx`UPDATE belege SET bu_schluessel = ${buSchluessel} WHERE id = ${id}`;
+        await tx`
+          INSERT INTO audit_log (beleg_id, mandant_id, aktion, alter_wert, neuer_wert)
+          VALUES (${id}, ${session.mandantId}, 'steuerschluessel_gesetzt', null, ${buSchluessel})`;
       }
 
       // Zahlungsweg + aufgelöstes Gegenkonto festschreiben (BER-116), solange der
