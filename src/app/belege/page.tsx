@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { withMandant } from "@/lib/db";
-import { euro, datum, STATUS_LABELS } from "@/lib/format";
+import { euro, datum, STATUS_LABELS, ZAHLUNGSWEG_LABELS } from "@/lib/format";
 import { LogoutButton } from "@/components/logout-button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -17,7 +17,7 @@ export default async function BelegePage() {
 
   const belege = await withMandant(session.mandantId, (tx) => tx`
     SELECT b.id, b.beleg_nr, b.beleg_datum, b.beleg_typ, b.betrag_brutto,
-           b.sachkonto, b.status, b.eingangskanal, b.verwendungszweck,
+           b.sachkonto, b.status, b.eingangskanal, b.verwendungszweck, b.zahlungsweg,
            (SELECT count(*)::int FROM beleg_seiten s WHERE s.beleg_id = b.id) AS seiten
       FROM belege b
      ORDER BY b.created_at DESC, b.id DESC`);
@@ -60,6 +60,7 @@ export default async function BelegePage() {
                 <TableHead>Verwendungszweck</TableHead>
                 <TableHead className="text-right">Brutto</TableHead>
                 <TableHead>Konto</TableHead>
+                <TableHead>Zahlung</TableHead>
                 <TableHead>Kanal</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -78,6 +79,15 @@ export default async function BelegePage() {
                   </TableCell>
                   <TableCell className="text-right">{euro(b.betrag_brutto)}</TableCell>
                   <TableCell>{(b.sachkonto as string) || "—"}</TableCell>
+                  <TableCell>
+                    {b.zahlungsweg ? (
+                      <span title={ZAHLUNGSWEG_LABELS[b.zahlungsweg as string]?.lang ?? (b.zahlungsweg as string)}>
+                        {ZAHLUNGSWEG_LABELS[b.zahlungsweg as string]?.kurz ?? "?"}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                   <TableCell>{b.eingangskanal as string}</TableCell>
                   <TableCell>
                     <span
@@ -94,7 +104,7 @@ export default async function BelegePage() {
               ))}
               {belege.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Noch keine Belege vorhanden
                   </TableCell>
                 </TableRow>

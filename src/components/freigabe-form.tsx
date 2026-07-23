@@ -26,6 +26,7 @@ export function FreigabeForm({
   teilbetragWertInitial = "",
   teilbetragGrundInitial = "",
   stbVermerkInitial = "",
+  zahlungswegKonten,
 }: {
   belegId: string;
   aktuellesSachkonto: string;
@@ -45,6 +46,7 @@ export function FreigabeForm({
   teilbetragWertInitial?: string;
   teilbetragGrundInitial?: string;
   stbVermerkInitial?: string;
+  zahlungswegKonten: { geschaeftskonto: string; alternativkonto: string; privat: string };
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
@@ -59,6 +61,8 @@ export function FreigabeForm({
   const [teilbetragWert, setTeilbetragWert] = useState(teilbetragWertInitial);
   const [teilbetragGrund, setTeilbetragGrund] = useState(teilbetragGrundInitial);
   const [stbVermerk, setStbVermerk] = useState(stbVermerkInitial);
+  // Zahlungsweg (BER-116): bewusst ohne Vorauswahl — Freigabe erst nach Wahl.
+  const [zahlungsweg, setZahlungsweg] = useState("");
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -106,6 +110,7 @@ export function FreigabeForm({
         payload.trinkgeld = trinkgeld;
       }
       if (stbVermerk !== stbVermerkInitial) payload.stb_vermerk = stbVermerk;
+      payload.zahlungsweg = zahlungsweg;
       if (erlaubtTeilbetrag && teilbetragAktiv && teilbetragWert.trim()) {
         payload.teilbetrag_basis = teilbetragBasis;
         payload.teilbetrag_wert = teilbetragWert;
@@ -264,6 +269,36 @@ export function FreigabeForm({
         </div>
       )}
 
+      <div className="space-y-2 rounded-md border p-3">
+        <p className="text-sm font-medium">
+          Zahlungsweg <span className="text-red-600">*</span>
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Pflichtangabe — bestimmt das Gegenkonto im Buchungsstapel. Ohne Auswahl ist
+          keine Freigabe möglich (Abgleich mit dem Kontoauszug).
+        </p>
+        <div className="space-y-1">
+          {(
+            [
+              ["geschaeftskonto", `Geschäftskonto (${zahlungswegKonten.geschaeftskonto})`],
+              ["alternativkonto", `Andere Karte/Konto (${zahlungswegKonten.alternativkonto})`],
+              ["privat", `Privat verauslagt (${zahlungswegKonten.privat})`],
+            ] as const
+          ).map(([wert, label]) => (
+            <label key={wert} className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="zahlungsweg"
+                value={wert}
+                checked={zahlungsweg === wert}
+                onChange={(e) => setZahlungsweg(e.target.value)}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-1">
         <Label htmlFor="stbVermerk">Vermerk für den Steuerberater (optional)</Label>
         <input
@@ -299,8 +334,12 @@ export function FreigabeForm({
         )}
       </div>
       {fehler && <p className="text-sm text-red-600">{fehler}</p>}
-      <Button onClick={freigeben} disabled={laeuft} className="w-full">
-        {laeuft ? "Freigabe läuft …" : "Beleg freigeben (→ geprüft)"}
+      <Button onClick={freigeben} disabled={laeuft || !zahlungsweg} className="w-full">
+        {laeuft
+          ? "Freigabe läuft …"
+          : !zahlungsweg
+            ? "Zahlungsweg wählen, um freizugeben"
+            : "Beleg freigeben (→ geprüft)"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Mit der Freigabe bestätigst du die Richtigkeit der Belegdaten. Der Beleg

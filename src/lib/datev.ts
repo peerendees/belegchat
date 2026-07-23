@@ -18,6 +18,9 @@ export type DatevBeleg = {
   termin_grund?: string | null;
   termin_ort?: string | null;
   termin_kunde?: string | null;
+  // Am Beleg festgeschriebenes Gegenkonto (BER-116); Fallback auf die
+  // Firmenkonstante nur für Altbestand ohne Wert.
+  gegenkonto?: string | null;
 };
 
 export type DatevMeta = {
@@ -173,7 +176,9 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   row[1] = q(sh);                          // Soll/Haben
   row[2] = q("EUR");                       // WKZ
   row[6] = b.sachkonto;                    // Konto
-  row[7] = meta.gegenkonto;                // Gegenkonto (ohne BU)
+  // Gegenkonto (ohne BU): am Beleg festgeschriebenes Konto (BER-116),
+  // Fallback auf die Firmenkonstante nur für Altbestand ohne Wert.
+  row[7] = b.gegenkonto ?? meta.gegenkonto;
   row[9] = ttmm(b.beleg_datum);            // Belegdatum TTMM
   row[10] = q(b.beleg_nr.slice(0, 36));    // Belegfeld 1
   let text = b.verwendungszweck || b.beleg_nr;

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { withMandant, sql } from "@/lib/db";
-import { euro, datum, datumZeit, STATUS_LABELS } from "@/lib/format";
+import { euro, datum, datumZeit, STATUS_LABELS, ZAHLUNGSWEG_LABELS } from "@/lib/format";
 import { FreigabeForm } from "@/components/freigabe-form";
 import { LoeschenButton } from "@/components/loeschen-button";
 import { BelegNavigation } from "@/components/beleg-navigation";
@@ -64,6 +64,17 @@ export default async function BelegDetailPage({
     SELECT konto_nr, bezeichnung FROM skr04_konten
      WHERE ist_aktiv IS NOT false ORDER BY konto_nr`;
 
+  // Firmen-Gegenkonten für die Zahlungsweg-Auswahl (BER-116).
+  const firmaKonten = await sql`
+    SELECT f.datev_gegenkonto, f.datev_gegenkonto_alternativ, f.datev_gegenkonto_privat
+      FROM mandanten m JOIN firmen f ON f.firma_nr = m.firma_nr
+     WHERE m.id = ${session.mandantId}`;
+  const zahlungswegKonten = {
+    geschaeftskonto: (firmaKonten[0]?.datev_gegenkonto as string) ?? "1800",
+    alternativkonto: (firmaKonten[0]?.datev_gegenkonto_alternativ as string) ?? "1810",
+    privat: (firmaKonten[0]?.datev_gegenkonto_privat as string) ?? "2100",
+  };
+
   const offen = ["vorschlag", "klaerungsbedarf"].includes(beleg.status as string);
 
   return (
@@ -118,6 +129,12 @@ export default async function BelegDetailPage({
               </dd>
               <dt className="text-muted-foreground">Eingangskanal</dt>
               <dd>{beleg.eingangskanal as string}</dd>
+              <dt className="text-muted-foreground">Zahlungsweg</dt>
+              <dd>
+                {beleg.zahlungsweg
+                  ? `${ZAHLUNGSWEG_LABELS[beleg.zahlungsweg as string]?.lang ?? (beleg.zahlungsweg as string)} (${(beleg.gegenkonto as string) ?? "—"})`
+                  : "—"}
+              </dd>
               {beleg.stb_vermerk ? (
                 <>
                   <dt className="text-muted-foreground">StB-Vermerk</dt>
@@ -222,6 +239,7 @@ export default async function BelegDetailPage({
                 }
                 teilbetragGrundInitial={(beleg.teilbetrag_grund as string) ?? ""}
                 stbVermerkInitial={(beleg.stb_vermerk as string) ?? ""}
+                zahlungswegKonten={zahlungswegKonten}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />
