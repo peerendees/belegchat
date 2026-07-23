@@ -27,25 +27,27 @@ Beigefügt: **`EXTF_Buchungsstapel_2024_Jahr_K2.csv`** (Korrekturfassung, 60 Sä
 
 **1 · Bitte nur die Korrekturfassung importieren.** Die Erstfassung
 (`EXTF_Buchungsstapel_2024_Jahr.csv`, übergeben am 20.07.2026) bitte verwerfen —
-eine kurze Bestätigung genügt uns für die Ablage. Beide Fassungen halten wir mit
-SHA-256-Prüfsumme revisionssicher vor.
+eine kurze Bestätigung genügt uns für die Ablage. Die Korrekturfassung halten wir
+mit SHA-256-Prüfsumme revisionssicher vor; die Belegkorrekturen sind lückenlos
+protokolliert.
 
-**2 · Sechs Sätze bitte umkontieren.** Die automatische Kontierung hat sechs
-Belege fälschlich auf 6520 gelegt (als Freiberufler fällt hier keine
-Gewerbesteuer an; die Kontierung ist bei uns revisionssicher festgeschrieben,
-daher die Bitte um Umbuchung bei Ihnen — die Vorsteuer konnte systemseitig nicht
-vorbelegt werden):
+**2 · Sechs vorab korrigierte Sätze — kein Handlungsbedarf für Sie.** Die
+automatische Kontierung hatte sechs Belege fälschlich auf 6520 gelegt (als
+Freiberufler fällt keine Gewerbesteuer an). Wir haben sie **vor der Abgabe**
+korrekt kontiert — in der beigefügten Korrekturfassung sind sie bereits richtig
+zugeordnet und tragen die Vorsteuer (19 %). Nur zur Transparenz:
 
-| Belegfeld 1 | Datum | Brutto | Inhalt | Vorschlag Zielkonto |
+| Belegfeld 1 | Datum | Brutto | Inhalt | Konto (korrigiert) |
 |---|---|---|---|---|
-| 01-2026-0017 | 13.05.2024 | 712,39 € | Honorar steuerliche Dienstleistungen | 6830 |
-| 01-2026-0018 | 13.05.2024 | 473,95 € | Honorar Steuerberatung (ESt 2021) | 6830 |
-| 01-2026-0019 | 13.05.2024 | 2.284,80 € | Honorar steuerliche Beratung/Prüfung | 6830 |
-| 01-2026-0025 | 03.07.2024 | 589,05 € | Design & Werbeunterlagen | 6880 |
-| 01-2026-0030 | 20.11.2024 | 712,39 € | Honorar steuerliche Dienstleistungen | 6830 |
-| 01-2026-0033 | 20.11.2024 | 473,95 € | Honorar Steuerberatung (ESt-Erklärung) | 6830 |
+| 01-2024-0017 | 13.05.2024 | 712,39 € | Honorar steuerliche Dienstleistungen | 6830 |
+| 01-2024-0018 | 13.05.2024 | 473,95 € | Honorar Steuerberatung (ESt 2021) | 6830 |
+| 01-2024-0019 | 13.05.2024 | 2.284,80 € | Honorar steuerliche Beratung/Prüfung | 6830 |
+| 01-2024-0025 | 03.07.2024 | 589,05 € | Design & Werbeunterlagen | 6880 |
+| 01-2024-0030 | 20.11.2024 | 712,39 € | Honorar steuerliche Dienstleistungen | 6830 |
+| 01-2024-0033 | 20.11.2024 | 473,95 € | Honorar Steuerberatung (ESt-Erklärung) | 6830 |
 
-Alle sechs weisen 19 % Vorsteuer aus (Belege liegen archiviert vor).
+Die Originalbelege liegen archiviert vor. (Die Belegnummern tragen durchgängig das
+Belegjahr 2024.)
 
 **3 · Prüfpunkt beim Import (Automatikkonten):** Sollte Ihr Kontenplan eines der
 bebuchten Konten als Automatikkonto führen und den mitgelieferten BU-Schlüssel
@@ -64,7 +66,8 @@ BERENT | Beratung + Entwicklung
 | 1 | Schlüssel 9/8 oder 90/80? | **Antwort StB via Betreiber (23.07.2026): `90`/`80`.** Seeds entsprechend, `bestaetigt=true`. Fallback-Hinweis (DATEV-Standard 9/8) bleibt für den Testimport dokumentiert |
 | 2 | Bedeutung 1810? | **Betreiber (23.07.2026):** Gegenkonto für Geschäftszahlungen über andere Karten/Konten — Abgrenzung zum Geschäftskonto 1800. UI-Label „Andere Karte/Konto" |
 | 3 | 2100 vs. 2180? | **Betreiber (23.07.2026):** 2100 = Privatkonto (StB-Vorgabe) bleibt. 2180 (Privateinlagen) als strengere Alternative im Spalten-Kommentar dokumentiert |
-| 4 | GewSt-Konto 6520/7610? | **Gegenstandslos — Freiberufler, keine GewSt.** Die 6 Belege sind Fehlkontierungen (5× StB-Honorar, 1× Werbung) → Umbuchungsliste im Versandteil. 7610-Seed bleibt in BER-120 für gewerbliche Betatest-Kunden (`docs/FEATURE-WUENSCHE.md` F-03) |
+| 4 | GewSt-Konto 6520/7610? | **Gegenstandslos — Freiberufler, keine GewSt.** Die 6 Fehlkontierungen (5× StB-Honorar → 6830, 1× Werbung → 6880) am 23.07.2026 **vor Abgabe im System korrigiert** (kontrollierter Batch, 66 Audit-Einträge, `specs/migrations/20260723_korrektur_2024_vorabgabe.sql`) → jetzt vorsteuerrelevant, 90er-Schlüssel im K2. Kein StB-Handlungsbedarf mehr. 7610-Seed bleibt in BER-120 für gewerbliche Betatest-Kunden (`docs/FEATURE-WUENSCHE.md` F-03) |
+| — | Belegnummern-Präfix 2026→2024 | **Betreiber (23.07.2026):** alle 60 im selben Batch auf Belegjahr umnummeriert (Buchung unverändert). Nummernvergabe-Logik wird für 2025/26 aufs Belegjahr umgestellt (Revision) |
 | 5 | Automatikkonten | Entschärft: StB erfasst Schlüssel auf 6805 → dort keine Automatik. Bleibt als Prüfpunkt A im Versandteil (Punkt 3) |
 | 6 | Erstfassung verworfen? | Bleibt: Bestätigungsbitte im Versandteil (Punkt 1). Erstfassung = Datei vom 20.07., K2 = Korrekturfassung nach Nacherfassung |
 | 7 | Liste offener Nachreichungen? | **Betreiber (23.07.2026): intern** — Belege werden vorgehalten, nicht übermittelt; Tracking über Dashboard-Filter „Dokument fehlt" |

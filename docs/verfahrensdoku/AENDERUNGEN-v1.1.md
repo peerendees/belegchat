@@ -52,3 +52,30 @@ Dokument lässt sich nicht ersetzen. Jede Nachreichung steht im unveränderliche
 (`dokument_nachgereicht`). Der Steuerberater-Vermerk am Beleg bleibt nach der Festschreibung
 unverändert — die Nachreichung wird nicht in den Vermerk fortgeschrieben, sondern über Kennzeichen
 und Protokoll dokumentiert.
+
+## Ä-5 · Einmal-Korrektur des 2024-Altbestands vor Erstabgabe (23.07.2026)
+
+Der am 20.07.2026 an die Kanzlei übergebene 2024-Stapel wurde beanstandet und **nicht importiert**.
+Vor der korrigierten Neuabgabe wurden am festgeschriebenen Bestand zwei Berichtigungen vorgenommen
+(Weisung des Betreibers, eng begrenzt, vollständig protokolliert):
+
+1. **Sechs Fehlkontierungen** — durch die automatische Kontierung fälschlich auf 6520
+   (Gewerbesteuer) gelegt — auf **6830** (5× Steuerberater-Honorar) bzw. **6880** (1× Werbung)
+   umkontiert. Als Freiberufler fällt keine Gewerbesteuer an; die neuen Konten sind
+   vorsteuerrelevant, sodass die Sätze im Korrekturstapel korrekt den Vorsteuerschlüssel tragen.
+2. **Belegnummern-Präfix** von `01-2026-` (Erfassungsjahr) auf `01-2024-` (Belegjahr) umgestellt —
+   rein die Darstellung; gebucht wurde ohnehin über das Belegdatum.
+
+Umsetzung: ein transaktionaler Eingriff, der den Festschreibungs-Schutz nur innerhalb der
+Transaktion ausgesetzt und nachweislich wieder aktiviert hat. Jede Änderung ist im
+append-only-Protokoll mit altem und neuem Wert festgehalten (66 Einträge, Aktion
+`korrektur_vorabgabe`). SQL-Abbild: `specs/migrations/20260723_korrektur_2024_vorabgabe.sql`.
+
+**Konsequenz für die Nachvollziehbarkeit (bewusst getragen):** Der Inhalt der am 20.07.2026
+übergebenen Erstfassung war nicht als Datei gespeichert (die Inhalts-/Hash-Speicherung, BER-121,
+kam erst am 23.07.). Da die zugrunde liegenden Belege nun korrigiert sind, ist die Erstfassung
+nicht mehr bitgenau reproduzierbar. Das ist vertretbar, weil sie verworfen wird und nie importiert
+wurde; **was sich geändert hat, ist über das Korrektur-Protokoll lückenlos belegt.** Der ab jetzt
+erzeugte Korrekturstapel wird mit Inhalt und SHA-256 revisionssicher gespeichert (BER-121). Für
+2025/2026 wird zusätzlich die Belegnummern-Vergabe auf das Belegjahr umgestellt, sodass der Versatz
+gar nicht mehr entsteht.
