@@ -1,6 +1,9 @@
 # BelegChat — Übergabe & Systemstand
 
-> **Stand: 19.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107 (Termin-Kontext) + BER-108 (Teilbeträge) live.
+> **Stand: 23.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107/108 live.
+> **StB-Rückmeldung 22.07.2026 umgesetzt (Baulauf 23.07.):** BER-116/117/118/119/121 gebaut
+> + gemerged, Migration angewendet. Offene Betreiber-Schritte: Runbook M1–M6 in
+> `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md`.
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -36,8 +39,9 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 - **Bewirtung** (§ 4 Abs. 5 Nr. 2 EStG): Auto-Erkennung → Konto 6640 + `klaerungsbedarf`; Pflichtfelder Anlass/Teilnehmer bei Freigabe erzwungen; **Trinkgeld** als eigenes Feld (KI + manuell); **Deckblatt-PDF** (Kopfseite + Originalseiten) per Link in der Detailansicht
 - **Auswärts-Belege / Termin-Kontext** (BER-107, Verallgemeinerung des Bewirtungs-Musters): Auto-Erkennung Taxi/Bahn/ÖPNV → `beleg_typ auswaerts`, Konto **6860 Reisekosten**; Felder `termin_grund` (Pflicht → sonst `klaerungsbedarf`), `termin_ort`, `termin_kunde`; **Trinkgeld** generisch (Spalte `trinkgeld`, aus `bewirtung_trinkgeld` umbenannt); Termin-Kontext im DATEV-Buchungstext; **Termin-Deckblatt-PDF** (gemeinsamer Renderer mit Bewirtung)
 - **Teilbeträge** (BER-108): bei Rechnungsbelegen nur einen Teil buchen (brutto **oder** netto). `betrag_*` bleibt Dokumentbetrag (GoBD); `gebucht_brutto/netto/mwst` + `teilbetrag_basis/grund` tragen die Buchung; Erfassung im Freigabe-Formular mit Live-Split-Vorschau; DATEV bucht `COALESCE(gebucht_*, betrag_*)` mit Buchungstext „(Teilbetrag)"; Audit `teilbetrag_gebucht`; `gebucht_*` nach Festschreibung gesperrt. Ein MwSt-Satz pro Teilbetrag (v1)
-- DATEV-Export `/export` (Monat/Quartal/Jahr), Re-Download deterministisch; Trinkgeld erscheint im Buchungstext
-- GoBD: Festschreibung ab `geprueft`, append-only Audit, Hash-Duplikatschutz, `archived_at`; Verfahrensdoku: `docs/Verfahrensdokumentation_BelegChat_v1.0.docx` (BERENT-CI)
+- DATEV-Export `/export` (Monat/Quartal/Jahr); **Export-Fassungen mit Inhalt + SHA-256** (BER-121): Re-Download liefert die gespeicherte Datei bitgleich, Korrekturfassung statt stiller Ersetzung
+- **StB-Rückmeldung (BER-116/117/118/119):** Zahlungsweg je Beleg → Gegenkonto 1800/1810/2100; Vorsteuerschlüssel 90/80 (Spalte 9, kanzleibestätigt); Beleg ohne Dokument erfass-/freigebbar + Nachreichen (append-only); Nacherfassungs-Ansicht für den 2024-Altbestand
+- GoBD: **Whitelist-Festschreibung** ab `geprueft` (löst Blacklist ab; jede künftige Spalte automatisch geschützt), append-only Audit, Hash-Duplikatschutz, `archived_at`; Verfahrensdoku v1.1-Ergänzungen: `docs/verfahrensdoku/AENDERUNGEN-v1.1.md`
 
 ## Initialisierung 15.07.2026 (dokumentationspflichtig)
 
@@ -50,6 +54,13 @@ Vor dem Echtstart wurden **alle Test-/Aufbaudaten entfernt** (44 Belege, 41 Seit
 3. **2026:** identisch; danach Monatsrhythmus (freigeben → exportieren → senden).
 
 ## Offene Punkte
+
+**StB-Rückmeldung — Betreiber-Schritte (Runbook `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md`):**
+M4 Nacherfassung der 60 Belege (`/nacherfassung`) → M5 Korrekturstapel `…_K2.csv` + Versand
+mit Anschreiben aus `docs/OFFENE-FRAGEN-STB.md` → M6 Linear-Status · M1 `DECRYPT_API_TOKEN`
+in Vercel + M3 Passkey-E2E (BER-118, Testfirma 99) · M2 n8n-Mehrdeutigkeits-Fix nach K2.
+Folge-Stories: BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
+Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
 | Punkt | Referenz |
 |-------|----------|
