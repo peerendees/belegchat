@@ -75,6 +75,28 @@ export default async function BelegDetailPage({
     privat: (firmaKonten[0]?.datev_gegenkonto_privat as string) ?? "2100",
   };
 
+  // Steuerschlüssel-Konfiguration der Firma + Vorbelegung aus mwst_satz (BER-117),
+  // nur wenn das Sachkonto vorsteuerrelevant ist (Gate).
+  const steuerschluessel = await sql`
+    SELECT s.bu_schluessel, s.bezeichnung, s.mwst_satz
+      FROM steuerschluessel s
+      JOIN mandanten m ON m.firma_nr = s.firma_nr
+     WHERE m.id = ${session.mandantId} AND s.typ = 'vorsteuer' AND s.aktiv
+     ORDER BY s.mwst_satz DESC`;
+  const vst = await sql`
+    SELECT vorsteuer_relevant FROM skr04_konten WHERE konto_nr = ${beleg.sachkonto as string} LIMIT 1`;
+  const buOptionen = steuerschluessel.map((s) => ({
+    schluessel: s.bu_schluessel as string,
+    bezeichnung: s.bezeichnung as string,
+  }));
+  const buVorschlag =
+    vst[0]?.vorsteuer_relevant === true
+      ? ((steuerschluessel.find((s) => Number(s.mwst_satz) === Number(beleg.mwst_satz))
+          ?.bu_schluessel as string) ?? null)
+      : null;
+  const buBezeichnung =
+    buOptionen.find((o) => o.schluessel === beleg.bu_schluessel)?.bezeichnung ?? null;
+
   const offen = ["vorschlag", "klaerungsbedarf"].includes(beleg.status as string);
 
   return (
@@ -133,6 +155,12 @@ export default async function BelegDetailPage({
               <dd>
                 {beleg.zahlungsweg
                   ? `${ZAHLUNGSWEG_LABELS[beleg.zahlungsweg as string]?.lang ?? (beleg.zahlungsweg as string)} (${(beleg.gegenkonto as string) ?? "—"})`
+                  : "—"}
+              </dd>
+              <dt className="text-muted-foreground">Steuerschlüssel</dt>
+              <dd>
+                {beleg.bu_schluessel
+                  ? `${beleg.bu_schluessel as string}${buBezeichnung ? ` — ${buBezeichnung}` : ""}`
                   : "—"}
               </dd>
               {beleg.stb_vermerk ? (
@@ -240,6 +268,8 @@ export default async function BelegDetailPage({
                 teilbetragGrundInitial={(beleg.teilbetrag_grund as string) ?? ""}
                 stbVermerkInitial={(beleg.stb_vermerk as string) ?? ""}
                 zahlungswegKonten={zahlungswegKonten}
+                buVorschlag={buVorschlag}
+                buOptionen={buOptionen}
               />
               <div className="flex justify-end">
                 <LoeschenButton belegId={id} belegNr={beleg.beleg_nr as string} />

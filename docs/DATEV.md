@@ -19,7 +19,9 @@
   aus dem Zahlungsweg aufgelöst (1800 Geschäftskonto / 1810 andere Karte/Konto / 2100 privat
   verauslagt, BER-116); Fallback auf die Firmenkonstante `firmen.datev_gegenkonto` nur für Altbestand
   ohne Wert (bis BER-119 nacherfasst hat)
-- **BU-Schlüssel leer** — Steuer läuft über SKR04-Automatikkonten bzw. wird vom StB gesetzt
+- **BU-Schlüssel** = `belege.bu_schluessel` (Spalte 9), vorbelegt aus der `steuerschluessel`-
+  Konfiguration je Firma (Seeds `90` für 19 % / `80` für 7 %, kanzleibestätigt 23.07.2026), Gate über
+  `skr04_konten.vorsteuer_relevant`; bei der Freigabe änderbar, leer bei Belegen ohne Vorsteuer (BER-117)
 - **Belegdatum** TTMM · **Belegfeld 1** = Beleg-Nr · **Buchungstext** = Verwendungszweck (60 Zeichen)
 - Header-Festschreibung = 0 (Festschreibung passiert beim StB-Import)
 

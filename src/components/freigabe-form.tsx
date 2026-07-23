@@ -27,6 +27,8 @@ export function FreigabeForm({
   teilbetragGrundInitial = "",
   stbVermerkInitial = "",
   zahlungswegKonten,
+  buVorschlag = null,
+  buOptionen = [],
 }: {
   belegId: string;
   aktuellesSachkonto: string;
@@ -47,6 +49,8 @@ export function FreigabeForm({
   teilbetragGrundInitial?: string;
   stbVermerkInitial?: string;
   zahlungswegKonten: { geschaeftskonto: string; alternativkonto: string; privat: string };
+  buVorschlag?: string | null;
+  buOptionen?: { schluessel: string; bezeichnung: string }[];
 }) {
   const router = useRouter();
   const [sachkonto, setSachkonto] = useState(aktuellesSachkonto);
@@ -63,6 +67,8 @@ export function FreigabeForm({
   const [stbVermerk, setStbVermerk] = useState(stbVermerkInitial);
   // Zahlungsweg (BER-116): bewusst ohne Vorauswahl — Freigabe erst nach Wahl.
   const [zahlungsweg, setZahlungsweg] = useState("");
+  // Steuerschlüssel (BER-117): aus dem MwSt-Satz vorbelegt, änderbar.
+  const [buSchluessel, setBuSchluessel] = useState(buVorschlag ?? "");
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
 
@@ -111,6 +117,7 @@ export function FreigabeForm({
       }
       if (stbVermerk !== stbVermerkInitial) payload.stb_vermerk = stbVermerk;
       payload.zahlungsweg = zahlungsweg;
+      payload.bu_schluessel = buSchluessel;
       if (erlaubtTeilbetrag && teilbetragAktiv && teilbetragWert.trim()) {
         payload.teilbetrag_basis = teilbetragBasis;
         payload.teilbetrag_wert = teilbetragWert;
@@ -311,6 +318,28 @@ export function FreigabeForm({
         <p className="text-xs text-muted-foreground">
           Erscheint im DATEV-Export als Zusatzinformation beim Steuerberater.
         </p>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="buSchluessel">Steuerschlüssel (Vorsteuer)</Label>
+        <select
+          id="buSchluessel"
+          className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+          value={buSchluessel}
+          onChange={(e) => setBuSchluessel(e.target.value)}
+        >
+          <option value="">ohne Schlüssel</option>
+          {buOptionen.map((o) => (
+            <option key={o.schluessel} value={o.schluessel}>
+              {o.schluessel} — {o.bezeichnung}
+            </option>
+          ))}
+        </select>
+        {sachkonto !== aktuellesSachkonto && (
+          <p className="text-xs text-muted-foreground">
+            Schlüssel passt zum Sachkonto? Bei Kontowechsel prüfen.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
