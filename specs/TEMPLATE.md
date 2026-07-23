@@ -35,6 +35,7 @@
 - [ ] Required Status Checks gruen
 - [ ] Kein "QA Failed" Label
 - [ ] Spec-File aktualisiert (Status: done)
+- [ ] Schema-Aenderungen in `docs/SCHEMA.md` nachgezogen
 
 ## Status
 

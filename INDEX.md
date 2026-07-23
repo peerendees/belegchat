@@ -72,8 +72,9 @@
 |------|-------|
 | `specs/TEMPLATE.md` | Story-Spec-Vorlage |
 | `specs/BER-XXX.md` | Einzelne Story-Specs |
-| `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116/117/118/119/121 (Spec-Anhang; Anwendung = Nachtlauf S1) |
+| `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116/117/118/119/121 (angewendet Baulauf S1) |
 | `specs/migrations/20260723_trigger_tests.sql` | Verhaltens-Tests zur Migration (Rollback-Transaktion) |
+| `specs/migrations/20260723_fix_seiten_insert_recursion.sql` | Korrektur-Migration: RLS-Rekursion `dash_seiten_insert` (im Baulauf S1 vom Trigger-Test gefunden + behoben) |
 
 ## Journal
 

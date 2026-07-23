@@ -80,9 +80,11 @@ Trigger `trg_datev_exporte_schutz`: DELETE nie; nach Einfrieren nur noch status
 
 id, beleg_id FK, seite_nr (>0, UNIQUE je Beleg), storage_path, gobd_hash (hex64),
 mime_type, created_at, archived_at (GoBD-Zeitstempel). UPDATE generell verboten;
-DELETE nur bei offenem Beleg. RLS-INSERT (`dash_seiten_insert`, ◆ Neufassung TO
-dashboard_service): offener Beleg ODER festgeschrieben + noch keine Seite
-(= Nachreichung genau EINER Datei, BER-118).
+DELETE nur bei offenem Beleg. RLS-INSERT (`dash_seiten_insert`): reiner
+Mandanten-Scope (jeder Status). Die Einmal-Dokument-Regel bei festgeschriebenem
+Beleg (BER-118) erzwingt der BEFORE-INSERT-Trigger `fn_beleg_seiten_insert_guard`
+— die frühere, in der Policy verschachtelte Selbstreferenz auf `beleg_seiten`
+verursachte `42P17`-Rekursion (Fix-Migration 23.07., im Baulauf S1 gefunden).
 
 ## mandanten · firmen · kunden
 
@@ -130,6 +132,7 @@ beleg_id→belege joinen.
 |---|---|
 | `fn_belege_festschreibung` | ◆ WHITELIST-Endfassung (Migration §7): alles eingefroren außer status-Übergang, Export-Metadaten (einmalig), updated_at, den ➕-Spalten samt Kopplungen |
 | `fn_beleg_seiten_unveraenderbar` | Seiten: kein UPDATE; DELETE nur bei offenem Beleg |
+| ◆ `fn_beleg_seiten_insert_guard` | BEFORE INSERT: bei festgeschriebenem Beleg nur EINE Seite (BER-118); ersetzt die rekursive Policy-Selbstreferenz |
 | `fn_audit_log_append_only` | Audit unveränderlich |
 | ◆ `fn_datev_exporte_schutz` | Export-Fassungen unveränderlich + Hash-Integrität |
 | `log_beleg_aenderungen` | auto-Audit status/sachkonto; ◆ stempelt mandant_id |
