@@ -30,7 +30,17 @@ export default async function ExportPage() {
              gesamtbetrag_brutto, datei_pfad, created_at,
              version, status, inhalts_hash, korrektur_grund
         FROM datev_exporte ORDER BY created_at DESC LIMIT 25`;
-    return { offen: offen[0], exporte, jahre: jahre.map((r) => r.jahr as number) };
+    // Altbestand ohne Zahlungsweg/Steuerschlüssel (BER-119).
+    const nacherfassung = await tx`
+      SELECT count(*)::int AS n FROM belege b JOIN skr04_konten k ON k.konto_nr = b.sachkonto
+       WHERE b.status = 'exportiert'
+         AND (b.zahlungsweg IS NULL OR (b.bu_schluessel IS NULL AND k.vorsteuer_relevant))`;
+    return {
+      offen: offen[0],
+      exporte,
+      jahre: jahre.map((r) => r.jahr as number),
+      nacherfassungOffen: nacherfassung[0].n as number,
+    };
   });
 
   return (
@@ -44,6 +54,17 @@ export default async function ExportPage() {
           {daten.offen.n as number} freigegebene Belege bereit ({euro(daten.offen.summe)})
         </p>
       </div>
+
+      {daten.nacherfassungOffen > 0 && (
+        <Link
+          href="/nacherfassung"
+          className="block rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100"
+        >
+          <span className="font-medium">Nacherfassung Altbestand</span> —{" "}
+          {daten.nacherfassungOffen} exportierte Belege ohne Zahlungsweg/Steuerschlüssel
+          nachzutragen (StB-Rückmeldung 22.07.2026) →
+        </Link>
+      )}
 
       <Card>
         <CardHeader className="pb-2">
