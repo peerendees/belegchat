@@ -15,7 +15,7 @@
 | Spalte | Typ | FS | Zweck / Story |
 |---|---|---|---|
 | id | uuid PK | 🔒 | |
-| beleg_nr | text UNIQUE | 🔒 | `FF-JJJJ-NNNN` via `naechste_beleg_nr(uuid)` |
+| beleg_nr | text UNIQUE | 🔒 | `FF-JJJJ-NNNN` via `naechste_beleg_nr(uuid[, date])`; JJJJ = **Belegjahr** aus `beleg_datum` (Fallback now()) |
 | buchungsjahr/-quartal/-monat | smallint generiert | (folgt beleg_datum) | aus `beleg_datum`; vom Trigger-Vergleich ausgenommen |
 | eingangskanal | text CHECK threema\|frontend_upload\|batch | 🔒 | |
 | threema_sender_id | text | 🔒 | bei frontend_upload = Session-Threema-ID |
@@ -137,7 +137,7 @@ beleg_id→belege joinen.
 | ◆ `fn_datev_exporte_schutz` | Export-Fassungen unveränderlich + Hash-Integrität |
 | `log_beleg_aenderungen` | auto-Audit status/sachkonto; ◆ stempelt mandant_id |
 | `update_updated_at` | belege/firmen/mandanten |
-| `naechste_beleg_nr(uuid)` | Belegnummern-Vergabe je Mandant/Jahr |
+| `naechste_beleg_nr(uuid, date DEFAULT NULL)` | Belegnummern-Vergabe je Mandant/**Belegjahr** (aus `p_beleg_datum`; ohne Parameter now()-Fallback = Erfassungsjahr, rückwärtskompatibel) |
 | `append_pending_seite` | atomares Seiten-Anhängen (nur Service Role) |
 | `zeitraum_grenzen` | Zeitraum-Helfer |
 

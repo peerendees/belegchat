@@ -4,6 +4,10 @@
 > **StB-Rückmeldung 22.07.2026 umgesetzt (Baulauf 23.07.):** BER-116/117/118/119/121 gebaut
 > + gemerged, Migration angewendet. Offene Betreiber-Schritte: Runbook M1–M6 in
 > `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md`.
+> **Revision 30.07.2026 (vor 2025/26-Import, live):** Belegnummer nach **Belegjahr** statt
+> Erfassungsjahr (`naechste_beleg_nr(uuid[, date])` + BER-118 + beide n8n-Workflows), Konto
+> **6520** (GewSt) in KI + Kontenrahmen gesperrt. Verfahrensdoku Ä-6; Migration
+> `20260730230148_…`. 2024-Bestand endet bei `01-2024-0060`.
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---

@@ -98,3 +98,30 @@ Abgrenzung: Die 16 Belege außerhalb der Referenzliste wurden nur im Zahlungsweg
 Beträge stammen aus der OCR-Erfassung und sind vom Betreiber gegen die Originalbelege zu
 plausibilisieren. Insgesamt 199 Protokolleinträge; der Bestand ist danach deckungsgleich mit der
 geprüften Referenz.
+
+## Ä-6 · Revision der Nummernvergabe (Belegjahr) und Konto-Sperre 6520 vor dem 2025/26-Import (30.07.2026)
+
+Vor dem Einlesen der 2025er- und 2026er-Belege wurden zwei prospektive Änderungen umgesetzt, damit
+die beim 2024-Altbestand nachträglich korrigierten Punkte (Ä-5) gar nicht erst wieder entstehen:
+
+1. **Belegnummer nach Belegjahr statt Erfassungsjahr.** Die Nummernvergabe leitet das Jahr im
+   Präfix `FF-JJJJ-NNNN` jetzt aus dem Belegdatum ab (Fallback: Erfassungsjahr, wenn kein Datum
+   erkannt wurde). So werden 2025 (`01-2025-…`) und 2026 (`01-2026-…`) getrennt und fortlaufend
+   nummeriert; der 2024-Bestand endet bei `01-2024-0060`. Die Änderung ist rückwärtskompatibel
+   (optionaler Datumsparameter), umgesetzt in der Datenbankfunktion `naechste_beleg_nr`, in der
+   manuellen Erfassung (BER-118) und in beiden Eingangs-Workflows (Threema, PDF-Import), die das
+   Belegdatum nun an die Nummernvergabe übergeben.
+
+2. **Konto 6520 (Gewerbesteuer) gesperrt.** Als Freiberufler fällt keine Gewerbesteuer an; 6520
+   war 2024 die Quelle der sechs KI-Fehlkontierungen (Ä-5). Das Konto wurde in der automatischen
+   Kontierung (KI-Kontenliste **und** Validierungs-Set beider Workflows) entfernt und im Kontenrahmen
+   deaktiviert (im Dashboard ausgeblendet). Eine irrtümliche Neuvergabe auf 6520 ist damit
+   ausgeschlossen; Vorschläge fallen auf das Standard-Sammelkonto zurück und werden bei der Freigabe
+   geprüft.
+
+Umsetzung als reguläre, versionierte Datenbank-Migration
+(`threema-decrypt/supabase/migrations/20260730230148_revision_belegnummer_belegjahr_und_6520_deaktivieren.sql`)
+plus Live-Aktualisierung beider n8n-Workflows über die n8n-API (aktiver Zustand unverändert,
+Repo-Export deckungsgleich nachgezogen). Bestandsdaten wurden nicht verändert; die Revision wirkt
+ausschließlich auf künftig erfasste Belege. Der breitere mandantenfähige Kontenrahmen (BER-120)
+bleibt davon unberührt und weiterhin offen.
