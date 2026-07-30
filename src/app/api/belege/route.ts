@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
         SELECT 1 FROM skr04_konten WHERE konto_nr = ${sachkonto} AND ist_aktiv IS NOT false LIMIT 1`;
       if (konto.length === 0) return { status: 422 as const, fehler: "Unbekanntes Sachkonto" };
 
-      const nr = await tx`SELECT naechste_beleg_nr(${session.mandantId}) AS r`;
+      // Belegnummer nach Belegjahr (aus beleg_datum), nicht nach Erfassungsjahr.
+      const nr = await tx`SELECT naechste_beleg_nr(${session.mandantId}, ${belegDatum}) AS r`;
       const belegNr = (nr[0].r as { beleg_nr: string }).beleg_nr;
 
       const ins = await tx`
