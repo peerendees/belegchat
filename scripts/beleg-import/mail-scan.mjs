@@ -116,6 +116,7 @@ const client = new ImapFlow({
   host: process.env.PROTON_IMAP_HOST || "127.0.0.1",
   port: Number(process.env.PROTON_IMAP_PORT || 1143),
   secure: false, // Bridge: STARTTLS auf localhost
+  // nosemgrep: problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification -- bewusst: lokale Proton-Mail-Bridge auf 127.0.0.1 mit self-signed Cert, kein externer Traffic
   tls: { rejectUnauthorized: false }, // Bridge nutzt ein lokales, selbstsigniertes Zertifikat
   auth: { user: process.env.PROTON_IMAP_USER, pass: process.env.PROTON_IMAP_PASSWORD },
   logger: false,

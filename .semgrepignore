@@ -6,3 +6,7 @@ build/
 coverage/
 *.min.js
 *.min.css
+
+# quality-gate-audit-Skill: absichtlich "schlechte" Testfixtures (Demo fuer den
+# Gate-Check selbst) — SAST darf sie nicht als echte Findings werten.
+.claude/skills/quality-gate-audit/references/test-fixtures/
