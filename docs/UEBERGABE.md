@@ -1,13 +1,18 @@
 # BelegChat — Übergabe & Systemstand
 
-> **Stand: 23.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107/108 live.
+> **Stand: 31.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107/108 live.
 > **StB-Rückmeldung 22.07.2026 umgesetzt (Baulauf 23.07.):** BER-116/117/118/119/121 gebaut
-> + gemerged, Migration angewendet. Offene Betreiber-Schritte: Runbook M1–M6 in
-> `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md`.
+> + gemerged, Migration angewendet.
+> **2024-Korrekturstapel (K2) beim StB:** Nacherfassung 60 Belege (M4) + Korrekturexport
+> `…_K2.csv` versandt (M5, Anschreiben `docs/OFFENE-FRAGEN-STB.md`) — **StB-Bestätigung
+> ausstehend**. Verspätete 2024-Rechnung: StB fasst manuell nach (kein BelegChat-Schritt).
 > **Revision 30.07.2026 (vor 2025/26-Import, live):** Belegnummer nach **Belegjahr** statt
 > Erfassungsjahr (`naechste_beleg_nr(uuid[, date])` + BER-118 + beide n8n-Workflows), Konto
 > **6520** (GewSt) in KI + Kontenrahmen gesperrt. Verfahrensdoku Ä-6; Migration
 > `20260730230148_…`. 2024-Bestand endet bei `01-2024-0060`.
+> **Gate-Hygiene 31.07.2026 (PR #48):** lokaler Pre-Commit-Hook läuft grün ohne `--no-verify` —
+> vorbestehende Semgrep-Findings bereinigt (Skill-Fixtures in `.semgrepignore`, mail-scan
+> `// nosemgrep`, CI-Action-Tags auf Commit-SHAs gepinnt).
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -30,7 +35,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 
 | Komponente | Ort | Stand |
 |------------|-----|-------|
-| n8n-Workflows | `MYpHUIHNMuIUR1ic` (Threema), `scLbdf5AbS8ojqJD` (PDF) — Live-Updates per API (`n8n-workflows/.env`) | aktiv |
+| n8n-Workflows | `MYpHUIHNMuIUR1ic` (Threema), `scLbdf5AbS8ojqJD` (PDF) — Live-Updates per API (`n8n-workflows/.env`) | aktiv · Revision 30.07. live (Belegjahr, 6520 raus) |
 | Edge Function | `threema-decrypt` (Supabase, Deploy via `supabase functions deploy`) | aktuell |
 | Dashboard | Vercel-Projekt `belegchat`, Auto-Deploy von `main` | live |
 | DB-Zugriff App | Rolle `dashboard_service` via Pooler `aws-1-eu-west-1`, RLS über `app.mandant_id` (ADR-05) | aktiv |
@@ -60,9 +65,17 @@ Vor dem Echtstart wurden **alle Test-/Aufbaudaten entfernt** (44 Belege, 41 Seit
 ## Offene Punkte
 
 **StB-Rückmeldung — Betreiber-Schritte (Runbook `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md`):**
-M4 Nacherfassung der 60 Belege (`/nacherfassung`) → M5 Korrekturstapel `…_K2.csv` + Versand
-mit Anschreiben aus `docs/OFFENE-FRAGEN-STB.md` → M6 Linear-Status · M1 `DECRYPT_API_TOKEN`
-in Vercel + M3 Passkey-E2E (BER-118, Testfirma 99) · M2 n8n-Mehrdeutigkeits-Fix nach K2.
+✓ **M4** Nacherfassung 60 Belege · ✓ **M5** Korrekturstapel `…_K2.csv` versandt → **StB-Bestätigung
+ausstehend**; nach Bestätigung 2024-Export-Status auf `uebertragen` setzen (Dashboard-Button dafür
+fehlt noch — kleine Lücke; `/export` erzeugt K2 per Betreiber-Klick). **Offen:** M6 Linear-Status ·
+M1 `DECRYPT_API_TOKEN` in Vercel · M3 Passkey-E2E (BER-118, Testfirma 99) · **M2** n8n „Mandant
+ermitteln": bei >1 Treffer Fehlerzweig statt erster Zeile — **separat** von der Revision 30.07.
+(beide Workflows wurden 30.07. live gepatcht → vor M2 aktuellen Repo-Export ziehen, nicht clobbern).
+
+**Nächster Schritt (2025/26-Import):** Belege in `Belege/Input` legen — die verspätete 2024-Rechnung
+vorher aus `Input` nehmen (StB übernimmt sie manuell), sonst importiert die Watch-CLI sie als
+`01-2024-0061`. Nummerierung zieht das Belegjahr (Fallback `now()` bei fehlendem OCR-Datum).
+
 Folge-Stories: BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
