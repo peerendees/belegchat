@@ -13,7 +13,9 @@
  *
  * Verwendung:
  *   node scripts/beleg-import/beleg-import.mjs import <datei.pdf> [weitere.pdf ...]
- *   node scripts/beleg-import/beleg-import.mjs watch [input-ordner]
+ *   node scripts/beleg-import/beleg-import.mjs watch [input-ordner] [--once]
+ *     --once: den Input-Ordner einmal abarbeiten und beenden (für GUI-Launcher);
+ *             ohne --once bleibt watch als Dauerbeobachtung laufen.
  *
  * Watch-Konzept (StB-Ablage):
  *   Input → Import → Erfolg: Datei wandert in die Jahres-Ablage
@@ -170,7 +172,8 @@ async function cmdWatch(args) {
   console.log(`Input:  ${inputDir}`);
   console.log(`Ablage: ${ARCHIVE_DIR_TEMPLATE}  ({jahr} = Belegjahr)`);
   console.log(`Fehler: ${ERROR_DIR}`);
-  console.log(`Mandant ${THREEMA_ID} — Ctrl+C zum Beenden`);
+  const einmal = args.includes("--once");
+  console.log(`Mandant ${THREEMA_ID}${einmal ? " — Einmal-Lauf" : " — Ctrl+C zum Beenden"}`);
 
   const sizes = new Map();
   const busy = new Set();
@@ -232,6 +235,24 @@ async function cmdWatch(args) {
     }
   };
 
+  if (einmal) {
+    // Einmal-Modus (GUI-Launcher): scannt wiederholt, bis der Input-Ordner geleert
+    // ist (Erfolg → Jahres-Archiv, Fehler/Duplikat → Fehler-Ordner), dann Exit.
+    // Wiederholung nötig, weil der Stabilitäts-Check zwei Sichtungen pro Datei braucht.
+    // Sicherheitskappe gegen dauerhaft „hängende" Dateien (z. B. iCloud lädt nicht).
+    for (let runde = 0, leer = 0; runde < 120 && leer < 2; runde++) {
+      await tick();
+      const offen = readdirSync(inputDir).filter((n) => {
+        const l = n.toLowerCase();
+        return l.endsWith(".pdf") || l.endsWith(".pdf.icloud");
+      });
+      leer = offen.length === 0 ? leer + 1 : 0;
+      if (leer < 2) await sleep(5000);
+    }
+    console.log("Fertig — Input-Ordner abgearbeitet.");
+    process.exit(0);
+  }
+
   await tick();
   setInterval(tick, 5000);
 }
@@ -241,4 +262,4 @@ if (!TOKEN) fail("IMPORT_API_TOKEN fehlt (belegchat/.env.local)");
 
 if (cmd === "import") cmdImport(args);
 else if (cmd === "watch") cmdWatch(args);
-else fail("Unbekanntes Kommando. Verwendung: beleg-import.mjs import <datei.pdf> [...] | watch [input-ordner]");
+else fail("Unbekanntes Kommando. Verwendung: beleg-import.mjs import <datei.pdf> [...] | watch [input-ordner] [--once]");

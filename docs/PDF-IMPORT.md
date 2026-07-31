@@ -34,9 +34,14 @@ liefert HTTP 409.
 # Einzelimport
 node scripts/beleg-import/beleg-import.mjs import rechnung.pdf [weitere.pdf ...]
 
-# Watch auf den Input-Ordner (Standard aus IMPORT_WATCH_DIR)
+# Watch auf den Input-Ordner (Standard aus IMPORT_WATCH_DIR) — Dauerbeobachtung
 node scripts/beleg-import/beleg-import.mjs watch
+
+# Einmal abarbeiten und beenden (für den Doppelklick-Launcher, ohne Terminal)
+node scripts/beleg-import/beleg-import.mjs watch --once
 ```
+
+**Doppelklick statt Terminal:** `scripts/beleg-import/belege-importieren.command` (ausführbar) ruft `watch --once` im Projektordner auf — eine Kopie auf dem Schreibtisch („Belege importieren.command") genügt per Doppelklick: verarbeitet den Input-Ordner einmal und schließt sich. Node wird fest über `/opt/homebrew/bin/node` aufgerufen (kein PATH nötig, da GUI-Start). Neue laufende Belege gehen weiter per Threema ein.
 
 **Watch-Konzept (StB-Ablage in iCloud):**
 
