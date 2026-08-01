@@ -1,6 +1,6 @@
 # BelegChat — Übergabe & Systemstand
 
-> **Stand: 31.07.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107/108 live.
+> **Stand: 01.08.2026** · Post-Alpha Phasen 1–4 + Erweiterungen; BER-107/108 live.
 > **StB-Rückmeldung 22.07.2026 umgesetzt (Baulauf 23.07.):** BER-116/117/118/119/121 gebaut
 > + gemerged, Migration angewendet.
 > **2024-Korrekturstapel (K2) beim StB:** Nacherfassung 60 Belege (M4) + Korrekturexport
@@ -13,6 +13,12 @@
 > **Gate-Hygiene 31.07.2026 (PR #48):** lokaler Pre-Commit-Hook läuft grün ohne `--no-verify` —
 > vorbestehende Semgrep-Findings bereinigt (Skill-Fixtures in `.semgrepignore`, mail-scan
 > `// nosemgrep`, CI-Action-Tags auf Commit-SHAs gepinnt).
+> **2026 live (01.08.):** Erst-Batch importiert — 32 Belege `01-2026-0001…0032`, 2024-Nachzügler
+> `01-2024-0061`, 0× auf 6520. Laufende Belege via Threema-Foto.
+> **Import-Automatik (01.08., PR #50/#51):** Doppelklick-Launcher + geplanter LaunchAgent
+> `de.berent.belegchat.import` (`watch --once` um 11:50/17:50/21:50). Threema-„Belegimport"-Befehl
+> + Produkt-Backend **spezifiziert, noch nicht gebaut** → `docs/THREEMA-BELEGIMPORT-BEFEHL.md`
+> (Bau im frischen Chat).
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -23,7 +29,7 @@
 
 ```
 Threema-Foto (mehrseitig, „Fertig") ─┐
-PDF → Belege/Input (Watch-CLI) ──────┼─► n8n ─► Edge (Entschlüsselung, Archiv,
+PDF → Belege/Input (Launcher/3×Tag) ─┼─► n8n ─► Edge (Entschlüsselung, Archiv,
 Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
                                                ▼
                      Supabase: belege · beleg_seiten (Originale + SHA-256 +
@@ -36,6 +42,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 | Komponente | Ort | Stand |
 |------------|-----|-------|
 | n8n-Workflows | `MYpHUIHNMuIUR1ic` (Threema), `scLbdf5AbS8ojqJD` (PDF) — Live-Updates per API (`n8n-workflows/.env`) | aktiv · Revision 30.07. live (Belegjahr, 6520 raus) |
+| Import-Automatik | Mac-lokal: Launcher `belege-importieren.command` + LaunchAgent `de.berent.belegchat.import` (geplant 3×/Tag) → n8n PDF-Webhook | live (01.08.) · Threema-Befehl offen |
 | Edge Function | `threema-decrypt` (Supabase, Deploy via `supabase functions deploy`) | aktuell |
 | Dashboard | Vercel-Projekt `belegchat`, Auto-Deploy von `main` | live |
 | DB-Zugriff App | Rolle `dashboard_service` via Pooler `aws-1-eu-west-1`, RLS über `app.mandant_id` (ADR-05) | aktiv |
@@ -72,9 +79,13 @@ M1 `DECRYPT_API_TOKEN` in Vercel · M3 Passkey-E2E (BER-118, Testfirma 99) · **
 ermitteln": bei >1 Treffer Fehlerzweig statt erster Zeile — **separat** von der Revision 30.07.
 (beide Workflows wurden 30.07. live gepatcht → vor M2 aktuellen Repo-Export ziehen, nicht clobbern).
 
-**Nächster Schritt (2025/26-Import):** Belege in `Belege/Input` legen — die verspätete 2024-Rechnung
-vorher aus `Input` nehmen (StB übernimmt sie manuell), sonst importiert die Watch-CLI sie als
-`01-2024-0061`. Nummerierung zieht das Belegjahr (Fallback `now()` bei fehlendem OCR-Datum).
+**Nächster Schritt:** **2026 ist importiert** (32 Belege `01-2026-0001…0032`); der 2024-Nachzügler
+wurde bewusst mit übernommen (`01-2024-0061`) — StB bucht ihn manuell, daher **kein separater
+2024-Export** dafür. **2025** folgt später (Belege noch nicht vollständig; keine manuelle Erfassung
+gewünscht). Import läuft ab jetzt **automatisch (geplant 3×/Tag 11:50/17:50/21:50)** bzw. per
+Doppelklick-Launcher — Dateien in `Belege/Input` werden zu den Zeiten verarbeitet (Belegjahr-Nummer,
+Fallback `now()` bei fehlendem OCR-Datum). Entwicklungsseitig als Nächstes: **Threema-„Belegimport"-Befehl**
+(Teil 2, `docs/THREEMA-BELEGIMPORT-BEFEHL.md`) — in frischem Chat.
 
 Folge-Stories: BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
