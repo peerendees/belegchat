@@ -103,6 +103,7 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `docs/GOBD.md` | GoBD-Dokumentation |
 | `docs/AUTH.md` | Auth-Dokumentation |
 | `docs/PDF-IMPORT.md` | PDF-Import-Dokumentation |
+| `docs/THREEMA-BELEGIMPORT-BEFEHL.md` | Lokale Import-Automatik (Launcher, geplanter Job) + Übergabe-Spec Threema-Befehl |
 | `docs/POST-ALPHA-PLAN.md` | Hauptplan Phasen 0-4 |
 | `docs/UEBERGABE.md` | Session-Uebergabe |
 | `docs/TESTPLAN.md` | Testplan |

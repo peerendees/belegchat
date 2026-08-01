@@ -43,6 +43,8 @@ node scripts/beleg-import/beleg-import.mjs watch --once
 
 **Doppelklick statt Terminal:** `scripts/beleg-import/belege-importieren.command` (ausführbar) ruft `watch --once` im Projektordner auf — eine Kopie auf dem Schreibtisch („Belege importieren.command") genügt per Doppelklick: verarbeitet den Input-Ordner einmal und schließt sich. Node wird fest über `/opt/homebrew/bin/node` aufgerufen (kein PATH nötig, da GUI-Start). Neue laufende Belege gehen weiter per Threema ein.
 
+**Automatischer Import (geplant 3×/Tag):** LaunchAgent `de.berent.belegchat.import` führt `watch --once` um **11:50 / 17:50 / 21:50** aus (kein Dauerprozess). Einrichtung, Steuerung (`launchctl …`) und der geplante Threema-„Belegimport"-Befehl: **`docs/THREEMA-BELEGIMPORT-BEFEHL.md`**.
+
 **Watch-Konzept (StB-Ablage in iCloud):**
 
 ```
