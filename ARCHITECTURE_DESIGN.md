@@ -103,7 +103,7 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `docs/GOBD.md` | GoBD-Dokumentation |
 | `docs/AUTH.md` | Auth-Dokumentation |
 | `docs/PDF-IMPORT.md` | PDF-Import-Dokumentation |
-| `docs/THREEMA-BELEGIMPORT-BEFEHL.md` | Lokale Import-Automatik (Launcher, geplanter Job) + Übergabe-Spec Threema-Befehl |
+| `docs/THREEMA-BELEGIMPORT-BEFEHL.md` | Import-Auslöser: Launcher, geplanter Job, Threema-Befehl „Belegimport" (BER-124) + Spec Produkt-Backend |
 | `docs/POST-ALPHA-PLAN.md` | Hauptplan Phasen 0-4 |
 | `docs/UEBERGABE.md` | Session-Uebergabe |
 | `docs/TESTPLAN.md` | Testplan |
@@ -123,3 +123,5 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `specs/migrations/20260723_trigger_tests.sql` | Trigger-Verhaltenstests (Rollback-Transaktion) |
 | `specs/migrations/20260723_fix_seiten_insert_recursion.sql` | Korrektur: RLS-Rekursion `dash_seiten_insert` (Baulauf S1) |
 | `journal/daily/2026-07-23-baulauf.md` | Abschlussnotiz des Baulaufs S0–S7 |
+| `journal/daily/2026-08-01-belegimport-befehl.md` | Abschlussnotiz BER-124 (Threema-Befehl „Belegimport") |
+| `docs/project/intentron-feedback.md` | Rückmeldungen ans INTENTRON-Team (belegt, je Session) |

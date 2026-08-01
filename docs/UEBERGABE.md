@@ -16,9 +16,13 @@
 > **2026 live (01.08.):** Erst-Batch importiert — 32 Belege `01-2026-0001…0032`, 2024-Nachzügler
 > `01-2024-0061`, 0× auf 6520. Laufende Belege via Threema-Foto.
 > **Import-Automatik (01.08., PR #50/#51):** Doppelklick-Launcher + geplanter LaunchAgent
-> `de.berent.belegchat.import` (`watch --once` um 11:50/17:50/21:50). Threema-„Belegimport"-Befehl
-> + Produkt-Backend **spezifiziert, noch nicht gebaut** → `docs/THREEMA-BELEGIMPORT-BEFEHL.md`
-> (Bau im frischen Chat).
+> `de.berent.belegchat.import` (`watch --once` um 11:50/17:50/21:50).
+> **Threema-Befehl „Belegimport" (01.08., BER-124, PR #53 + threema-decrypt #29 + n8n-workflows #24) live:** Textnachricht an den Bot startet den
+> Import sofort und meldet Zahlen, Belegnummern und Fehlerdateien zurück — Poller-LaunchAgent
+> `de.berent.belegchat.poller`, n8n-Ergebnis-Workflow `6GDS7NzfiTRavKjr`, Migration
+> `20260801092326_…`. Details `docs/THREEMA-BELEGIMPORT-BEFEHL.md`. **Offen:** der Befehl selbst
+> ist noch nicht vom Handy aus ausgelöst worden (alles davor und danach ist geprüft).
+> Produkt-Backend dazu = BER-125 (Backlog).
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -42,7 +46,8 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 | Komponente | Ort | Stand |
 |------------|-----|-------|
 | n8n-Workflows | `MYpHUIHNMuIUR1ic` (Threema), `scLbdf5AbS8ojqJD` (PDF) — Live-Updates per API (`n8n-workflows/.env`) | aktiv · Revision 30.07. live (Belegjahr, 6520 raus) |
-| Import-Automatik | Mac-lokal: Launcher `belege-importieren.command` + LaunchAgent `de.berent.belegchat.import` (geplant 3×/Tag) → n8n PDF-Webhook | live (01.08.) · Threema-Befehl offen |
+| Import-Automatik | Mac-lokal: Launcher `belege-importieren.command` + LaunchAgent `de.berent.belegchat.import` (geplant 3×/Tag) → n8n PDF-Webhook | live (01.08.) |
+| Import auf Zuruf | Threema-Text `Belegimport` → n8n-Zweig → `import_kommandos` → LaunchAgent `de.berent.belegchat.poller` (20-s-Takt) → Ergebnis-Workflow `6GDS7NzfiTRavKjr` → Threema | live (01.08., BER-124) · Auslösung vom Handy noch ungetestet |
 | Edge Function | `threema-decrypt` (Supabase, Deploy via `supabase functions deploy`) | aktuell |
 | Dashboard | Vercel-Projekt `belegchat`, Auto-Deploy von `main` | live |
 | DB-Zugriff App | Rolle `dashboard_service` via Pooler `aws-1-eu-west-1`, RLS über `app.mandant_id` (ADR-05) | aktiv |
@@ -51,6 +56,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 ## Feature-Stand
 
 - Threema-Mehrseiten-Eingang mit frühem Push (BER-95) · PDF-Batch/Hot-Folder (BER-90) · Proton-Mail-Scan → Sichtungsordner (BER-97)
+- **Threema-Befehl „Belegimport"** (BER-124): Textnachricht startet den lokalen Import zwischen den geplanten Zeiten; Freischaltung je Mandant über `mandanten.import_befehl_aktiv` (nicht hartkodiert), Rückmeldung mit Zahlen, Belegnummern und Fehlerdateien. Nur ein Import gleichzeitig (prozessübergreifende Sperre)
 - Dashboard: Passkey-Auth (Multi-Passkey; NordPass-Fix `requireUserVerification:false`), Belegliste, Detail mit Audit-Trail, Freigabe mit SKR04-Korrektur, **Entwurf löschen** (Hash wird frei, Duplikatschutz bleibt)
 - **Bewirtung** (§ 4 Abs. 5 Nr. 2 EStG): Auto-Erkennung → Konto 6640 + `klaerungsbedarf`; Pflichtfelder Anlass/Teilnehmer bei Freigabe erzwungen; **Trinkgeld** als eigenes Feld (KI + manuell); **Deckblatt-PDF** (Kopfseite + Originalseiten) per Link in der Detailansicht
 - **Auswärts-Belege / Termin-Kontext** (BER-107, Verallgemeinerung des Bewirtungs-Musters): Auto-Erkennung Taxi/Bahn/ÖPNV → `beleg_typ auswaerts`, Konto **6860 Reisekosten**; Felder `termin_grund` (Pflicht → sonst `klaerungsbedarf`), `termin_ort`, `termin_kunde`; **Trinkgeld** generisch (Spalte `trinkgeld`, aus `bewirtung_trinkgeld` umbenannt); Termin-Kontext im DATEV-Buchungstext; **Termin-Deckblatt-PDF** (gemeinsamer Renderer mit Bewirtung)
@@ -87,7 +93,8 @@ Doppelklick-Launcher — Dateien in `Belege/Input` werden zu den Zeiten verarbei
 Fallback `now()` bei fehlendem OCR-Datum). Entwicklungsseitig als Nächstes: **Threema-„Belegimport"-Befehl**
 (Teil 2, `docs/THREEMA-BELEGIMPORT-BEFEHL.md`) — in frischem Chat.
 
-Folge-Stories: BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
+Folge-Stories: BER-125 (Import-Befehl im Dashboard verwalten — Teil 3),
+BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
 | Punkt | Referenz |
@@ -101,7 +108,7 @@ Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
 ## Secrets-Inventar (nur Orte, keine Werte)
 
-`belegchat/.env.local`: IMPORT_*, DASHBOARD_DB_URL, AUTH_SESSION_SECRET, WEBAUTHN_*, DECKBLATT_TOKEN, PROTON_IMAP_* · `n8n-workflows/.env`: N8N_API_KEY · n8n-Server-`.env`: THREEMA_*, SUPABASE_*, IMPORT_API_TOKEN · Supabase Edge Secrets: DECRYPT_API_TOKEN, MISTRAL_API_KEY, DECKBLATT_TOKEN u. a. · Vercel-Env (`belegchat`): wie `.env.local` (Dashboard-Teil, eigenes Prod-Session-Secret)
+`belegchat/.env.local`: IMPORT_* (inkl. IMPORT_ERGEBNIS_WEBHOOK_URL), DASHBOARD_DB_URL, AUTH_SESSION_SECRET, WEBAUTHN_*, DECKBLATT_TOKEN, PROTON_IMAP_* · `n8n-workflows/.env`: N8N_API_KEY · n8n-Server-`.env`: THREEMA_*, SUPABASE_*, IMPORT_API_TOKEN · Supabase Edge Secrets: DECRYPT_API_TOKEN, MISTRAL_API_KEY, DECKBLATT_TOKEN u. a. · Vercel-Env (`belegchat`): wie `.env.local` (Dashboard-Teil, eigenes Prod-Session-Secret)
 
 ## Arbeitskonventionen
 

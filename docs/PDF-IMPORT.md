@@ -39,11 +39,27 @@ node scripts/beleg-import/beleg-import.mjs watch
 
 # Einmal abarbeiten und beenden (für den Doppelklick-Launcher, ohne Terminal)
 node scripts/beleg-import/beleg-import.mjs watch --once
+
+# Zusätzlich eine maschinenlesbare Bilanz auf stdout (nur mit --once, für den Poller)
+node scripts/beleg-import/beleg-import.mjs watch --once --json
 ```
+
+Mit `--json` gehen die Verlaufsmeldungen nach stderr und stdout trägt allein die
+Zusammenfassung: `{importiert, duplikate, fehler, belegnummern[], duplikatdateien[],
+fehlerdateien[{datei, grund}]}` (plus `gesperrt: true`, wenn ein anderer Lauf aktiv war).
+
+**Nur ein Import gleichzeitig:** `watch` hält eine prozessübergreifende Sperre
+(`$TMPDIR/belegchat-import.lock`, PID-basiert, verwaiste Sperren werden übernommen).
+Nötig, seit es drei Auslöser gibt — Doppelklick, geplanter Job und Threema-Befehl.
+Ohne sie liefen zwei Prozesse in dieselbe Falle wie BER-111: Mistral-Rate-Limit und
+Kollision bei der MAX-basierten Belegnummer. Ein zweiter Lauf wartet bis zu 5 Minuten
+und meldet sich sonst als `gesperrt`.
 
 **Doppelklick statt Terminal:** `scripts/beleg-import/belege-importieren.command` (ausführbar) ruft `watch --once` im Projektordner auf — eine Kopie auf dem Schreibtisch („Belege importieren.command") genügt per Doppelklick: verarbeitet den Input-Ordner einmal und schließt sich. Node wird fest über `/opt/homebrew/bin/node` aufgerufen (kein PATH nötig, da GUI-Start). Neue laufende Belege gehen weiter per Threema ein.
 
-**Automatischer Import (geplant 3×/Tag):** LaunchAgent `de.berent.belegchat.import` führt `watch --once` um **11:50 / 17:50 / 21:50** aus (kein Dauerprozess). Einrichtung, Steuerung (`launchctl …`) und der geplante Threema-„Belegimport"-Befehl: **`docs/THREEMA-BELEGIMPORT-BEFEHL.md`**.
+**Automatischer Import (geplant 3×/Tag):** LaunchAgent `de.berent.belegchat.import` führt `watch --once` um **11:50 / 17:50 / 21:50** aus (kein Dauerprozess).
+
+**Auf Zuruf per Threema (BER-124):** Textnachricht `Belegimport` an den Bot startet denselben Lauf sofort und meldet das Ergebnis zurück. Dahinter steht der LaunchAgent `de.berent.belegchat.poller` (Dauerläufer, 20-s-Takt). Einrichtung, Steuerung (`launchctl …`) und Ablauf: **`docs/THREEMA-BELEGIMPORT-BEFEHL.md`**.
 
 **Watch-Konzept (StB-Ablage in iCloud):**
 
@@ -66,6 +82,8 @@ IMPORT_THREEMA_ID=BUMFMZ39
 IMPORT_WATCH_DIR=…/Papierlos/Steuerberater/Belege/Input
 IMPORT_ARCHIVE_DIR=…/Papierlos/Steuerberater/Belege/StB Belege {jahr}
 IMPORT_ERROR_DIR=…/Papierlos/Steuerberater/Belege/Fehler Import
+IMPORT_ERGEBNIS_WEBHOOK_URL=https://n8n.srv1098810.hstgr.cloud/webhook/belegchat-import-ergebnis
+DASHBOARD_DB_URL=…      # Poller: Rolle dashboard_service via Pooler (ADR-05)
 ```
 
 Limits: max. 15 MB pro PDF, nur `%PDF-`-Dateien; Edge validiert zusätzlich per pdf-lib.
