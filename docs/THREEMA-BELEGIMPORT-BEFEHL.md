@@ -146,4 +146,13 @@ für den Button ist keine Migration nötig, er legt dieselbe Zeile an wie der Th
 | Ergebnis-Webhook | 401 bei falschem Token, 400 ohne Felder, 200 + Threema-Zustellung |
 | Durchstich Poller | Auftrag → `gemeldet` in 18 s, Threema-Meldung zugestellt |
 | Import-Sperre | verwaiste Sperre übernommen, parallele Läufe serialisiert |
-| Befehl per Threema | **offen — braucht eine echte Nachricht vom Handy des Betreibers** |
+| Befehl per Threema | **abgenommen 01.08. 17:20** — Befehl vom Handy → Sofort-Reply → Import → Ergebnismeldung in 34 s, ohne Eingriff |
+
+Ablauf der Abnahme (UTC): 15:19:56 legt n8n den Auftrag an · 15:19:59/15:20:00 Eingangs-Workflow
+`success` (Sofort-Reply) · 15:20:09 Poller übernimmt · 15:20:14 `erledigt` (Eingang leer, 0/0) ·
+15:20:26 Ergebnis-Workflow `success` · 15:20:32 `gemeldet`.
+
+**Betriebsbeobachtung:** Der Mac verlor am 01.08. mehrfach kurz die Verbindung zum Supabase-Pooler
+(12:37, 13:20–13:47, 14:51–14:55 UTC — `ENOTFOUND`, `EHOSTUNREACH`, `CONNECT_TIMEOUT`). Der Poller
+protokolliert solche Runden und macht weiter; ein Befehl während eines Aussetzers wird bis zu 20 s
+später abgeholt. Häufen sich die Ausfälle, lohnt ein Blick auf Schlafverhalten und WLAN des Macs.

@@ -20,9 +20,14 @@
 > **Threema-Befehl „Belegimport" (01.08., BER-124, PR #53 + threema-decrypt #29 + n8n-workflows #24) live:** Textnachricht an den Bot startet den
 > Import sofort und meldet Zahlen, Belegnummern und Fehlerdateien zurück — Poller-LaunchAgent
 > `de.berent.belegchat.poller`, n8n-Ergebnis-Workflow `6GDS7NzfiTRavKjr`, Migration
-> `20260801092326_…`. Details `docs/THREEMA-BELEGIMPORT-BEFEHL.md`. **Offen:** der Befehl selbst
-> ist noch nicht vom Handy aus ausgelöst worden (alles davor und danach ist geprüft).
+> `20260801092326_…`. Details `docs/THREEMA-BELEGIMPORT-BEFEHL.md`. **Abgenommen 01.08. 17:20:**
+> Befehl vom Handy → Ergebnismeldung in 34 s, ganze Kette ohne Eingriff.
 > Produkt-Backend dazu = BER-125 (Backlog).
+> **DATEV-Buchungstext (01.08., BER-126, PR #54/#55):** Der Termin-Kontext erreichte den Export nie
+> (60-Zeichen-Kappung), und zwei Sätze lagen mit 61 Zeichen über dem DATEV-Limit. Kontext steht jetzt
+> in Zusatzinformation `Art 3`; `(Teilbetrag)`/Trinkgeld haben Vorrang; gekürzt wird nach der
+> Latin-1-Ersetzung. Dazu die protokollierte Einzelkorrektur `termin_ort` an `01-2026-0035`
+> (Verfahrensdoku Ä-7). **Wichtig: noch kein Auswärts-Beleg exportiert** — der Fix greift vor der Abgabe.
 > Neue Arbeits-Session: `CLAUDE.md` lesen → bei Bedarf diese Datei + `docs/TESTPLAN.md`.
 
 ---
@@ -47,7 +52,7 @@ Proton-Mail-Scan → Sichtung → Input ─┘         OCR, KI-Kontierung SKR04)
 |------------|-----|-------|
 | n8n-Workflows | `MYpHUIHNMuIUR1ic` (Threema), `scLbdf5AbS8ojqJD` (PDF) — Live-Updates per API (`n8n-workflows/.env`) | aktiv · Revision 30.07. live (Belegjahr, 6520 raus) |
 | Import-Automatik | Mac-lokal: Launcher `belege-importieren.command` + LaunchAgent `de.berent.belegchat.import` (geplant 3×/Tag) → n8n PDF-Webhook | live (01.08.) |
-| Import auf Zuruf | Threema-Text `Belegimport` → n8n-Zweig → `import_kommandos` → LaunchAgent `de.berent.belegchat.poller` (20-s-Takt) → Ergebnis-Workflow `6GDS7NzfiTRavKjr` → Threema | live (01.08., BER-124) · Auslösung vom Handy noch ungetestet |
+| Import auf Zuruf | Threema-Text `Belegimport` → n8n-Zweig → `import_kommandos` → LaunchAgent `de.berent.belegchat.poller` (20-s-Takt) → Ergebnis-Workflow `6GDS7NzfiTRavKjr` → Threema | live · abgenommen 01.08. 17:20 (BER-124) |
 | Edge Function | `threema-decrypt` (Supabase, Deploy via `supabase functions deploy`) | aktuell |
 | Dashboard | Vercel-Projekt `belegchat`, Auto-Deploy von `main` | live |
 | DB-Zugriff App | Rolle `dashboard_service` via Pooler `aws-1-eu-west-1`, RLS über `app.mandant_id` (ADR-05) | aktiv |
