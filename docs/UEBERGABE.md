@@ -17,7 +17,7 @@
 > `01-2024-0061`, 0× auf 6520. Laufende Belege via Threema-Foto.
 > **Import-Automatik (01.08., PR #50/#51):** Doppelklick-Launcher + geplanter LaunchAgent
 > `de.berent.belegchat.import` (`watch --once` um 11:50/17:50/21:50).
-> **Threema-Befehl „Belegimport" (01.08., BER-124) live:** Textnachricht an den Bot startet den
+> **Threema-Befehl „Belegimport" (01.08., BER-124, PR #53 + threema-decrypt #29 + n8n-workflows #24) live:** Textnachricht an den Bot startet den
 > Import sofort und meldet Zahlen, Belegnummern und Fehlerdateien zurück — Poller-LaunchAgent
 > `de.berent.belegchat.poller`, n8n-Ergebnis-Workflow `6GDS7NzfiTRavKjr`, Migration
 > `20260801092326_…`. Details `docs/THREEMA-BELEGIMPORT-BEFEHL.md`. **Offen:** der Befehl selbst
