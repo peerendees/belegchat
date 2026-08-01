@@ -122,6 +122,7 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116..119/121 (angewendet Baulauf S1) |
 | `specs/migrations/20260723_trigger_tests.sql` | Trigger-Verhaltenstests (Rollback-Transaktion) |
 | `specs/migrations/20260723_fix_seiten_insert_recursion.sql` | Korrektur: RLS-Rekursion `dash_seiten_insert` (Baulauf S1) |
+| `specs/migrations/20260801_korrektur_termin_ort_0035.sql` | Protokoll der Einmal-Korrektur `termin_ort` an 01-2026-0035 (BER-126, Verfahrensdoku Ä-7) |
 | `journal/daily/2026-07-23-baulauf.md` | Abschlussnotiz des Baulaufs S0–S7 |
 | `journal/daily/2026-08-01-belegimport-befehl.md` | Abschlussnotiz BER-124 (Threema-Befehl „Belegimport") |
 | `docs/project/intentron-feedback.md` | Rückmeldungen ans INTENTRON-Team (belegt, je Session) |
