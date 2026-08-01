@@ -43,12 +43,13 @@ belegchat/
 │   ├── ALPHA-HANDOFF.md      ← Alpha-Stand (E2E grün)
 │   └── vault/                ← Obsidian-Staging (PMO, ADRs, SOPs)
 ├── src/app/                  ← Next.js (noch Template)
-├── scripts/beleg-import/     ← PDF-Batch CLI (import, watch) — docs/PDF-IMPORT.md
+├── scripts/beleg-import/     ← PDF-Batch CLI (import, watch) + Import-Poller — docs/PDF-IMPORT.md
 └── SICHERHEIT.md
 
 threema-decrypt/              ← Edge Function (Schwester-Repo im Monorepo)
 n8n-workflows/n8n/MYpHUIHNMuIUR1ic/  ← Threema-Workflow-Export
 n8n-workflows/n8n/scLbdf5AbS8ojqJD/  ← PDF-Import-Workflow-Export
+n8n-workflows/n8n/6GDS7NzfiTRavKjr/  ← Import-Ergebnis-Workflow-Export (BER-124)
 ```
 
 ---
@@ -94,7 +95,8 @@ IMPORT_API_TOKEN=           # Phase 2 n8n-Webhook (auch in n8n-Server-.env)
 IMPORT_WATCH_DIR=           # Phase 2 CLI: Belege/Input
 IMPORT_ARCHIVE_DIR=         # Phase 2 CLI: Belege/StB Belege {jahr}
 IMPORT_ERROR_DIR=           # Phase 2 CLI: Belege/Fehler Import
-DASHBOARD_DB_URL=           # Phase 3: Rolle dashboard_service via Pooler (ADR-05)
+IMPORT_ERGEBNIS_WEBHOOK_URL= # BER-124: n8n-Webhook fuer die Threema-Ergebnismeldung
+DASHBOARD_DB_URL=           # Phase 3: Rolle dashboard_service via Pooler (ADR-05); auch Import-Poller
 AUTH_SESSION_SECRET=        # Phase 3: Session-/Challenge-JWTs
 WEBAUTHN_RP_ID=             # Phase 3: localhost | app.belegchat.de
 WEBAUTHN_ORIGIN=            # Phase 3: http://localhost:3000 | https://…

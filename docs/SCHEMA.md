@@ -94,8 +94,10 @@ verursachte `42P17`-Rekursion (Fix-Migration 23.07., im Baulauf S1 gefunden).
   datev_gegenkonto ('1800') · ◆ datev_gegenkonto_alternativ ('1810') ·
   ◆ datev_gegenkonto_privat ('2100'). BER-120 ergänzt kontenrahmen_code.
 - `mandanten`: id, threema_id, firma_nr FK, modus test|produktiv, bezeichnung,
-  aktiv. UNIQUE (threema_id, firma_nr); ◆ partial-UNIQUE (threema_id) WHERE
-  produktiv AND aktiv — höchstens EIN produktiver Mandant je Threema-ID.
+  aktiv, ➕ import_befehl_aktiv (BER-124: darf diese Threema-ID den Textbefehl
+  „Belegimport" auslösen? default false, Firma 01 true). UNIQUE (threema_id,
+  firma_nr); ◆ partial-UNIQUE (threema_id) WHERE produktiv AND aktiv — höchstens
+  EIN produktiver Mandant je Threema-ID.
   n8n-Lookup: bei >1 Treffer Fehler statt erster Zeile (Runbook M2).
 
 ## skr04_konten
@@ -125,6 +127,17 @@ beleg_id→belege joinen.
 - `pending_belege`: Threema-Mehrseiten-Zwischenstand (seiten jsonb, status, ein
   offener Vorgang je Mandant via partial-UNIQUE); RPC `append_pending_seite`.
 - `kontierungs_lerndata`: leer; Kontierungsgedächtnis (BER-98), mandantenfähig.
+
+## import_kommandos ➕ (BER-124)
+
+id, mandant_id FK, angefordert_am, status (CHECK offen|in_arbeit|erledigt|
+gemeldet), ergebnis jsonb, erledigt_am. Teilindex auf `status='offen'`.
+Aufträge des Threema-Befehls „Belegimport": n8n schreibt (Service-Key), der
+Mac-Poller arbeitet ab und meldet zurück. **Keine Buchhaltungsdaten** — daher
+keine Festschreibung, kein Audit-Trigger. RLS: `dashboard_service` darf
+SELECT/INSERT/UPDATE im Mandanten-Kontext (`app.mandant_id`); anon/authenticated
+sind explizit entzogen. `ergebnis`: {importiert, duplikate, fehler,
+belegnummern[], duplikatdateien[], fehlerdateien[{datei, grund}]}.
 
 ## Funktionen & Trigger (fachlich)
 

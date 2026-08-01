@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BelegChat Import-Poller (BER-124) — Dauerläufer, nicht zeitgesteuert.
+
+  Ergänzt den geplanten Job de.berent.belegchat.import (11:50/17:50/21:50) um den
+  On-Demand-Weg: der Poller fragt alle 20 s, ob per Threema „Belegimport" angefordert
+  wurde, und stößt dann denselben Import an. Beide Wege teilen sich die Sperre in
+  beleg-import.mjs, laufen also nie gleichzeitig.
+
+  Installation:
+    cp scripts/beleg-import/de.berent.belegchat.poller.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/de.berent.belegchat.poller.plist
+  Status / Log:
+    launchctl list | grep belegchat
+    tail -f ~/Library/Logs/belegchat-poller.log
+  Deaktivieren:
+    launchctl bootout gui/$(id -u)/de.berent.belegchat.poller
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>de.berent.belegchat.poller</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/node</string>
+    <string>/Users/Shared/Projekte/Entwicklung/Projekte/belegchat/scripts/beleg-import/import-poller.mjs</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/Shared/Projekte/Entwicklung/Projekte/belegchat</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <!-- Bei wiederholtem Absturz nicht im Sekundentakt neu starten. -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/kunkel/Library/Logs/belegchat-poller.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/kunkel/Library/Logs/belegchat-poller.log</string>
+</dict>
+</plist>

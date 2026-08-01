@@ -1,10 +1,10 @@
 # Threema-Belegimport-Befehl + lokale Import-Automatik
 
-> Übergabe-Spec (Stand 01.08.2026). Teil 1 (lokale Automatik) ist **umgesetzt**;
-> Teil 2 (Threema-Befehl) und Teil 3 (Produkt-Backend) sind **spezifiziert, noch nicht gebaut** —
-> gedacht für einen **frischen, fokussierten Chat** (dieser Kontext ist sehr lang).
+> Stand 01.08.2026. Teil 1 (lokale Automatik) und **Teil 2 (Threema-Befehl, BER-124) sind
+> umgesetzt und live**; Teil 3 (Produkt-Backend) ist spezifiziert und wartet auf eine
+> eigene Story.
 >
-> provenance: classification internal · status draft · source claude
+> provenance: classification internal · status active · source claude
 
 ---
 
@@ -35,60 +35,115 @@ gesteuert, am treffendsten „geplanter Job".
 
 ---
 
-## Teil 2 — Threema-Belegimport-Befehl (ZU BAUEN)
+## Teil 2 — Threema-Belegimport-Befehl (UMGESETZT, BER-124)
 
 **Ziel:** Betreiber schickt dem BelegChat-Threema-Bot eine Textnachricht und stößt den Import
 vom Handy an — mit **voller Ergebnis-Rückmeldung** per Threema. Ergänzt den geplanten Job um
 einen **On-Demand-Lauf** zwischen den festen Zeiten.
 
 **Betreiber-Festlegungen (31.07./01.08.2026):**
-- **Befehlswort:** `Belegimport` (Betreiber-Formulierung „Auslöser Belegimport"; Groß/Klein egal).
-  Empfehlung: zusätzlich `Import` als Synonym annehmen. **Vor dem Bau kurz bestätigen.**
-- **Berechtigter Absender:** aktuell **`BUMFMZ39`** — aber **nicht hartkodieren**: die zulässige
-  Threema-ID soll **im Backend hinterlegbar** sein (Betreiber-Wunsch, „bau das vorbereitend").
-- **Rückmeldung:** **volle Ergebnis-Meldung** per Threema (z. B. „12 importiert, 0 Fehler,
-  Nummern 01-2026-0033…0044"), nicht nur „angestoßen".
+- **Befehlswort:** ausschließlich **`Belegimport`** (Groß/Klein egal, getrimmt). `Import` wurde
+  bewusst **nicht** als Synonym belegt — der Begriff bleibt für spätere Import-Varianten frei.
+- **Berechtigter Absender:** nicht hartkodiert, sondern `mandanten.import_befehl_aktiv`.
+  Für Firma 01 (`BUMFMZ39`) auf `true`, Testfirma 99 auf `false`.
+- **Rückmeldung:** volle Ergebnis-Meldung — Zahlen, Belegnummern **und Dateinamen der Fehler**.
 
-**Design:**
-1. **DB-Config (statt Hardcode)** — minimal vorbereitet: Flag pro Mandant/Firma, z. B.
-   `mandanten.import_befehl_aktiv boolean default false` (die zulässigen Absender = registrierte
-   `threema_sender_id` mit Flag `true`; für Firma 01/BUMFMZ39 auf `true`). Die bestehende
-   n8n-Node **„Mandant ermitteln"** löst `threema_sender_id → mandant` bereits auf.
-2. **Auftrags-Tabelle** `import_kommandos` (Supabase): `id, mandant_id, angefordert_am,
-   status (offen|in_arbeit|erledigt|gemeldet), ergebnis jsonb, erledigt_am`. RLS/Grants für
-   `dashboard_service` (Mac-Poller nutzt `DASHBOARD_DB_URL`).
-3. **n8n-Zweig im Threema-Workflow** (`MYpHUIHNMuIUR1ic`, Andockpunkt: Switch **„Prüfe
-   Nachrichtentyp"** → heute landet Text bei **„Text ignorieren"**): wenn Text ∈ {belegimport,
-   import} **und** Absender-Mandant `import_befehl_aktiv` → `INSERT import_kommandos(offen)` +
-   Sofort-Reply „Belegimport angestoßen …"; sonst wie bisher ignorieren. **Sorgfältig: Repo-Edit
-   + Live-Patch + Read-back**, wie die Revision (siehe [[belegchat-n8n-live-updates]]).
-4. **Lokaler Poller** (neuer LaunchAgent, z. B. `de.berent.belegchat.poller`, KeepAlive, alle
-   ~20 s): pollt `import_kommandos WHERE status='offen'` → `in_arbeit` → `watch --once` mit
-   **strukturierter Zusammenfassung** (dafür `beleg-import.mjs` um einen Summary-Output erweitern:
-   Anzahl importiert/Fehler + Belegnummern, z. B. `--once --json`) → schreibt `ergebnis` +
-   `status='erledigt'`.
-5. **Ergebnis-Rückkanal:** Poller ruft einen kleinen **n8n-Webhook „Import-Ergebnis senden"**
-   mit der Zusammenfassung → n8n sendet die Threema-Nachricht (Gateway-Creds liegen serverseitig,
-   nicht auf dem Mac) → `status='gemeldet'`. (Alternative: separater n8n-Schedule pollt `erledigt`.)
+```
+Threema „Belegimport"  ──►  n8n: Route belegimport  ──►  INSERT import_kommandos (offen)
+                                       │                         │
+                            Sofort-Reply „angestoßen"            │  Mac-Poller (20 s)
+                                                                 ▼
+                            Threema ◄── n8n „Import-Ergebnis" ◄── watch --once --json
+                                        (gemeldet)      (erledigt)
+```
 
-**Sicherheit:** fixes Befehlswort (kein freier Input → keine Injection), Absender DB-gegated,
-nur berechtigte Mandanten. Der Poller führt ausschließlich das feste `watch --once` aus.
+### Was wo liegt
+
+| Baustein | Ort |
+|----------|-----|
+| Migration (Flag + `import_kommandos`) | `threema-decrypt/supabase/migrations/20260801092326_threema_belegimport_befehl.sql` |
+| n8n-Befehlszweig | Workflow `MYpHUIHNMuIUR1ic`, Nodes „Import-Kommando anlegen" + „Import-Bestätigung senden" |
+| n8n-Ergebnis-Webhook | Workflow **`6GDS7NzfiTRavKjr`** „BelegChat Import-Ergebnis", Pfad `belegchat-import-ergebnis` |
+| Poller | `scripts/beleg-import/import-poller.mjs` |
+| LaunchAgent | `scripts/beleg-import/de.berent.belegchat.poller.plist` |
+| Bilanz-Ausgabe der CLI | `beleg-import.mjs watch --once --json` |
+
+### Erkennung im Workflow
+
+Der Andockpunkt ist **nicht** „Prüfe Nachrichtentyp" (das trennt nur leere von befüllten
+Nachrichten), sondern die Code-Node **„Mehrseiten Routing"** und der Switch **„Mehrseiten
+Router"**. Dort entstand die neue Route `belegimport` (Ausgang 5; der Fallback rutschte
+dadurch auf Ausgang 6):
+
+```js
+} else if (inhalt.isText) {
+  route = (befehl === 'belegimport' && inhalt.import_befehl_aktiv)
+    ? 'belegimport'
+    : 'text_ohne_pending';
+}
+```
+
+Zwei bewusste Einschränkungen:
+- Die Route greift nur, wenn **kein Mehrseiten-Vorgang offen** ist. Wer gerade Seiten sammelt
+  und „Belegimport" tippt, bekommt wie bisher die Rückfrage — ein laufender Beleg wird nicht gekapert.
+- Ohne `import_befehl_aktiv` landet der Text im alten Zweig „Text ignorieren" (freundlicher
+  Hinweis, Foto zu senden). Der Absender erfährt nicht, dass es einen Befehl gibt.
+
+### Ergebnistext
+
+Formatiert wird im Poller (`meldungsText`), nicht in n8n — so ist der Wortlaut versioniert
+und ohne Workflow-Änderung anpassbar. n8n sendet nur, was ankommt.
+
+| Fall | Nachricht |
+|------|-----------|
+| Erfolg | `✅ Belegimport fertig: 12 importiert. Nummern 01-2026-0033…0044` |
+| Mit Fehlern | zusätzlich `⚠️`, `Fehler: rechnung.pdf — HTTP 500: …` (max. 5, dann „… und N weitere") |
+| Duplikate | `Duplikate: alt.pdf` |
+| Nichts zu tun | `ℹ️ Belegimport: keine neuen Dateien im Eingang.` |
+| Import läuft schon | `⏳ Es läuft gerade schon ein Import…` |
+| Lauf abgebrochen | `⚠️ … Bitte „Belegimport" noch einmal senden.` |
+
+Belegnummern werden zu `0033…0044` zusammengezogen, wenn die Folge lückenlos ist, sonst
+aufgezählt (ab 9 Nummern gekappt).
+
+### Betrieb
+
+```bash
+launchctl list | grep belegchat            # poller mit PID = läuft, import mit '-' = wartet auf Uhrzeit
+tail -f ~/Library/Logs/belegchat-poller.log
+launchctl bootout   gui/$(id -u)/de.berent.belegchat.poller   # aus
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/de.berent.belegchat.poller.plist  # an
+```
+
+Hängengebliebene Aufträge (`in_arbeit` nach Absturz/Neustart) räumt der Poller **beim Start**
+auf und meldet sie als abgebrochen — der einzige Bearbeiter ist er selbst, also kann `in_arbeit`
+beim Start nichts anderes bedeuten.
+
+**Sicherheit:** festes Befehlswort (kein freier Input → keine Injection), Absender per DB-Flag
+gegated, Ergebnis-Webhook mit `IMPORT_API_TOKEN` (401/400 geprüft). Der Poller führt
+ausschließlich das feste `watch --once` aus — der Befehl trägt keine Parameter, die irgendwo
+landen könnten. Threema-Gateway-Zugangsdaten bleiben auf dem n8n-Server; der Mac kennt sie nicht.
+Nur ein Import gleichzeitig: `beleg-import.mjs` hält eine prozessübergreifende Sperre, damit
+geplanter Job und Threema-Lauf sich nicht überschneiden (BER-111-Falle).
 
 ---
 
-## Teil 3 — Produkt-Backend (FRISCHER CHAT, später)
+## Teil 3 — Produkt-Backend ([BER-125](https://linear.app/berent/issue/BER-125), offen)
 
 Aus der vorbereiteten DB-Config ein echtes Feature machen: Dashboard-Admin zum Verwalten der
 berechtigten Threema-IDs / `import_befehl_aktiv` je Mandant; Historie der `import_kommandos`
-sichtbar; optional „Import jetzt"-Button im Dashboard. Eigene Story (Linear-Issue anlegen),
-gehört nicht in denselben Kontext wie der n8n-/Poller-Bau.
+sichtbar; optional „Import jetzt"-Button im Dashboard. Die RLS-Policies decken das bereits ab —
+für den Button ist keine Migration nötig, er legt dieselbe Zeile an wie der Threema-Befehl.
 
 ---
 
-## Startpunkt für den frischen Chat
+## Prüfstand 01.08.2026
 
-1. `CLAUDE.md` → `docs/UEBERGABE.md` → **dieses Dokument**.
-2. Teil 2 bauen: DB-Migration (Flag + `import_kommandos`) · n8n-Zweig (Repo+Live+Read-back) ·
-   Poller-LaunchAgent · Summary-Output in der CLI · Ergebnis-Webhook.
-3. Befehlswort und Ergebnis-Text-Format mit dem Betreiber kurz bestätigen.
-4. Teil 3 als eigene Story terminieren.
+| Geprüft | Ergebnis |
+|---------|----------|
+| Migration auf Prod | angewendet; Firma 01 `true`, Testfirma 99 `false` |
+| n8n Live vs. Repo-Export | bitgleich nach Read-back; Router-Ausgänge 0–6 wie vorgesehen |
+| Ergebnis-Webhook | 401 bei falschem Token, 400 ohne Felder, 200 + Threema-Zustellung |
+| Durchstich Poller | Auftrag → `gemeldet` in 18 s, Threema-Meldung zugestellt |
+| Import-Sperre | verwaiste Sperre übernommen, parallele Läufe serialisiert |
+| Befehl per Threema | **offen — braucht eine echte Nachricht vom Handy des Betreibers** |

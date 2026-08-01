@@ -13,9 +13,12 @@
  *
  * Verwendung:
  *   node scripts/beleg-import/beleg-import.mjs import <datei.pdf> [weitere.pdf ...]
- *   node scripts/beleg-import/beleg-import.mjs watch [input-ordner] [--once]
+ *   node scripts/beleg-import/beleg-import.mjs watch [input-ordner] [--once] [--json]
  *     --once: den Input-Ordner einmal abarbeiten und beenden (für GUI-Launcher);
  *             ohne --once bleibt watch als Dauerbeobachtung laufen.
+ *     --json: (nur mit --once) Verlaufsmeldungen nach stderr, am Ende eine
+ *             maschinenlesbare Zusammenfassung als einzige stdout-Zeile — für den
+ *             Poller des Threema-Befehls „Belegimport" (BER-124).
  *
  * Watch-Konzept (StB-Ablage):
  *   Input → Import → Erfolg: Datei wandert in die Jahres-Ablage
@@ -28,11 +31,12 @@
 
 import {
   readFileSync, writeFileSync, existsSync, mkdirSync, renameSync,
-  readdirSync, statSync,
+  readdirSync, statSync, openSync, closeSync, unlinkSync,
 } from "node:fs";
 import { resolve, join, basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -59,6 +63,12 @@ function fail(msg) {
   console.error(`FEHLER: ${msg}`);
   process.exit(1);
 }
+
+// Mit --json gehört stdout allein der Zusammenfassung — der Poller liest sie dort.
+// Die gewohnten Verlaufsmeldungen wandern deshalb nach stderr; im Log des
+// LaunchAgent (stdout+stderr in derselben Datei) ändert sich dadurch nichts.
+const JSON_AUSGABE = process.argv.includes("--json");
+const melde = (...args) => (JSON_AUSGABE ? console.error(...args) : console.log(...args));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -161,6 +171,57 @@ function safeTarget(dir, name) {
   return target;
 }
 
+/**
+ * Prozessübergreifende Sperre für den Import.
+ *
+ * Der Scan-Lock in cmdWatch (BER-111) verhindert überlappende Scans innerhalb
+ * EINES Prozesses. Seit BER-124 gibt es zwei Auslöser, die sich begegnen können:
+ * den geplanten Job (11:50/17:50/21:50) und den per Threema angestoßenen Lauf.
+ * Zwei parallele Prozesse liefen sonst in dieselbe Falle wie damals — Mistral-
+ * Rate-Limit und Kollision bei der MAX-basierten Belegnummer.
+ *
+ * Verwaiste Sperren (Prozess existiert nicht mehr, etwa nach Absturz oder
+ * Neustart) werden übernommen, damit ein toter Lauf nicht dauerhaft blockiert.
+ */
+const SPERR_DATEI = join(tmpdir(), "belegchat-import.lock");
+
+function prozessLebt(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM"; // existiert, gehört nur jemand anderem
+  }
+}
+
+async function sperreErwerben(wartenMs = 300000) {
+  const bis = Date.now() + wartenMs;
+  for (;;) {
+    try {
+      const fd = openSync(SPERR_DATEI, "wx");
+      writeFileSync(fd, String(process.pid));
+      closeSync(fd);
+      return true;
+    } catch (e) {
+      if (e.code !== "EEXIST") throw e;
+      let pid = 0;
+      try { pid = Number(readFileSync(SPERR_DATEI, "utf8").trim()); } catch { /* gerade entfernt */ }
+      if (Date.now() >= bis) return false;
+      if (!pid || !prozessLebt(pid)) {
+        try { unlinkSync(SPERR_DATEI); } catch { /* jemand war schneller */ }
+        continue;
+      }
+      await sleep(5000);
+    }
+  }
+}
+
+function sperreFreigeben() {
+  try {
+    if (Number(readFileSync(SPERR_DATEI, "utf8").trim()) === process.pid) unlinkSync(SPERR_DATEI);
+  } catch { /* nicht vorhanden oder fremd — nichts zu tun */ }
+}
+
 async function cmdWatch(args) {
   const inputDir = resolve(args.find((a) => !a.startsWith("--")) || WATCH_DIR ||
     fail("Kein Input-Ordner: Argument fehlt und IMPORT_WATCH_DIR nicht gesetzt"));
@@ -169,14 +230,40 @@ async function cmdWatch(args) {
   if (!ERROR_DIR) fail("IMPORT_ERROR_DIR nicht gesetzt (belegchat/.env.local)");
   mkdirSync(ERROR_DIR, { recursive: true });
 
-  console.log(`Input:  ${inputDir}`);
-  console.log(`Ablage: ${ARCHIVE_DIR_TEMPLATE}  ({jahr} = Belegjahr)`);
-  console.log(`Fehler: ${ERROR_DIR}`);
+  melde(`Input:  ${inputDir}`);
+  melde(`Ablage: ${ARCHIVE_DIR_TEMPLATE}  ({jahr} = Belegjahr)`);
+  melde(`Fehler: ${ERROR_DIR}`);
   const einmal = args.includes("--once");
-  console.log(`Mandant ${THREEMA_ID}${einmal ? " — Einmal-Lauf" : " — Ctrl+C zum Beenden"}`);
+  if (JSON_AUSGABE && !einmal) fail("--json gibt es nur zusammen mit --once");
+  melde(`Mandant ${THREEMA_ID}${einmal ? " — Einmal-Lauf" : " — Ctrl+C zum Beenden"}`);
 
   const sizes = new Map();
   const busy = new Set();
+
+  // Zusammenfassung über alle Runden des Einmal-Laufs (Grundlage der Threema-Meldung)
+  const bilanz = {
+    gestartet_am: new Date().toISOString(),
+    importiert: 0,
+    duplikate: 0,
+    fehler: 0,
+    belegnummern: [],
+    duplikatdateien: [],
+    fehlerdateien: [],
+  };
+
+  // Sperre halten, solange dieser Prozess importiert (siehe sperreErwerben).
+  process.on("exit", sperreFreigeben);
+  for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => process.exit(0));
+  if (!(await sperreErwerben())) {
+    melde("Ein anderer Import-Lauf ist noch aktiv — dieser Lauf wird übersprungen.");
+    if (JSON_AUSGABE) {
+      bilanz.gesperrt = true;
+      bilanz.beendet_am = new Date().toISOString();
+      process.stdout.write(`${JSON.stringify(bilanz)}\n`);
+      process.exit(0);
+    }
+    process.exit(einmal ? 0 : 1);
+  }
 
   async function scan() {
     triggerIcloudDownloads(inputDir);
@@ -198,17 +285,23 @@ async function cmdWatch(args) {
         if (r.duplicate) {
           renameSync(p, safeTarget(ERROR_DIR, name));
           writeFileSync(join(ERROR_DIR, `${name}.err.txt`), `${new Date().toISOString()}\n${r.error}\n`);
-          console.log(`= ${name} → ${r.error} (verschoben nach Fehler-Ordner)`);
+          bilanz.duplikate++;
+          bilanz.duplikatdateien.push(name);
+          melde(`= ${name} → ${r.error} (verschoben nach Fehler-Ordner)`);
         } else {
           const jahr = belegJahr(r);
           const archiveDir = ARCHIVE_DIR_TEMPLATE.replaceAll("{jahr}", jahr);
           mkdirSync(archiveDir, { recursive: true });
           renameSync(p, safeTarget(archiveDir, name));
-          console.log(`✓ ${name} → Beleg ${r.beleg_nr} (${r.seiten} Seiten) → ${basename(archiveDir)}/`);
+          bilanz.importiert++;
+          if (r.beleg_nr) bilanz.belegnummern.push(r.beleg_nr);
+          melde(`✓ ${name} → Beleg ${r.beleg_nr} (${r.seiten} Seiten) → ${basename(archiveDir)}/`);
         }
       } catch (e) {
         renameSync(p, safeTarget(ERROR_DIR, name));
         writeFileSync(join(ERROR_DIR, `${name}.err.txt`), `${new Date().toISOString()}\n${e.message}\n`);
+        bilanz.fehler++;
+        bilanz.fehlerdateien.push({ datei: name, grund: e.message });
         console.error(`✗ ${name} → ${e.message} (verschoben nach Fehler-Ordner)`);
       } finally {
         sizes.delete(name);
@@ -249,7 +342,11 @@ async function cmdWatch(args) {
       leer = offen.length === 0 ? leer + 1 : 0;
       if (leer < 2) await sleep(5000);
     }
-    console.log("Fertig — Input-Ordner abgearbeitet.");
+    melde("Fertig — Input-Ordner abgearbeitet.");
+    if (JSON_AUSGABE) {
+      bilanz.beendet_am = new Date().toISOString();
+      process.stdout.write(`${JSON.stringify(bilanz)}\n`);
+    }
     process.exit(0);
   }
 
@@ -262,4 +359,4 @@ if (!TOKEN) fail("IMPORT_API_TOKEN fehlt (belegchat/.env.local)");
 
 if (cmd === "import") cmdImport(args);
 else if (cmd === "watch") cmdWatch(args);
-else fail("Unbekanntes Kommando. Verwendung: beleg-import.mjs import <datei.pdf> [...] | watch [input-ordner] [--once]");
+else fail("Unbekanntes Kommando. Verwendung: beleg-import.mjs import <datei.pdf> [...] | watch [input-ordner] [--once] [--json]");
