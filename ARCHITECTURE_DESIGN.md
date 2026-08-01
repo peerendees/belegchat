@@ -123,3 +123,5 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `specs/migrations/20260723_trigger_tests.sql` | Trigger-Verhaltenstests (Rollback-Transaktion) |
 | `specs/migrations/20260723_fix_seiten_insert_recursion.sql` | Korrektur: RLS-Rekursion `dash_seiten_insert` (Baulauf S1) |
 | `journal/daily/2026-07-23-baulauf.md` | Abschlussnotiz des Baulaufs S0–S7 |
+| `journal/daily/2026-08-01-belegimport-befehl.md` | Abschlussnotiz BER-124 (Threema-Befehl „Belegimport") |
+| `docs/project/intentron-feedback.md` | Rückmeldungen ans INTENTRON-Team (belegt, je Session) |

@@ -84,3 +84,4 @@
 |------|-------|
 | `journal/learnings.md` | Learning-Loop L1 |
 | `journal/daily/` | Tagesnotizen |
+| `docs/project/intentron-feedback.md` | Rückmeldungen ans INTENTRON-Team (belegt, je Session) |
