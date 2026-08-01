@@ -125,3 +125,40 @@ plus Live-Aktualisierung beider n8n-Workflows über die n8n-API (aktiver Zustand
 Repo-Export deckungsgleich nachgezogen). Bestandsdaten wurden nicht verändert; die Revision wirkt
 ausschließlich auf künftig erfasste Belege. Der breitere mandantenfähige Kontenrahmen (BER-120)
 bleibt davon unberührt und weiterhin offen.
+
+---
+
+## Ä-7 · Termin-Kontext im Buchungsstapel + Einzelkorrektur eines Ortsfelds (01.08.2026)
+
+Beim Erfassen der ÖPNV-Tickets fiel zweierlei auf; beides betrifft den Nachweis der
+betrieblichen Veranlassung bei Auswärts-Belegen und wurde **vor dem ersten Export** dieser
+Belege bereinigt.
+
+**1. Der Termin-Kontext erreichte den Buchungsstapel nicht (BER-126).** Grund, Ort und Kunde
+wurden an den Verwendungszweck angehängt und beim DATEV-Feldlimit von 60 Zeichen
+abgeschnitten. Da der Verwendungszweck allein 37–71 Zeichen belegte, blieb vom Kontext bei
+keinem der sechs Auswärts-Belege etwas übrig. Der Kontext steht jetzt in einem eigenen
+Zusatzinformations-Feld (`Art 3` „Termin", bis 210 Zeichen) — dasselbe Verfahren, das schon
+für den Vermerk an die Kanzlei (Ä-1-Umfeld, BER-109) und die Kennzeichnung fehlender
+Dokumente (Ä-4, BER-118) genutzt wird. Zusätzlich behalten die buchungsrelevanten Zusätze
+„(Teilbetrag)" und der Trinkgeld-Hinweis Vorrang vor der Kürzung, und die Feldlänge wird an
+der tatsächlich geschriebenen (Latin-1-)Fassung gemessen — zuvor konnten Sätze mit 61 Zeichen
+entstehen, weil Ersatzzeichen wie „→" → „->" nach dem Kürzen verlängern.
+
+**2. Einzelkorrektur `termin_ort` an 01-2026-0035.** Bei der Erfassung war die
+Zielhaltestellen-/Zonennummer des Tickets („5101") als Ort übernommen worden statt
+„Bad Homburg". Der Beleg stand bereits auf `geprueft`; `termin_ort` gehört nicht zu den nach
+der Festschreibung änderbaren Feldern. Weil der Kontext mit der Änderung aus Punkt 1
+künftig vollständig im Stapel ankommt, wurde der Wert auf ausdrückliche Weisung des
+Betreibers berichtigt — eng begrenzt auf **ein Feld an einem nicht exportierten Beleg**.
+
+Umsetzung wie bei Ä-5: ein transaktionaler Eingriff mit vorgeschalteter Prüfung der
+Vorbedingungen, der den Festschreibungs-Schutz nur innerhalb der Transaktion ausgesetzt und
+danach nachweislich wieder aktiviert hat; gegengeprüft mit einer verworfenen Probe-Änderung,
+die korrekt abgewiesen wurde. Die Änderung ist im append-only-Protokoll mit altem und neuem
+Wert festgehalten (Aktion `korrektur_vorabgabe`). Das Protokoll der automatischen
+Änderungsaufzeichnung blieb dabei aktiv — es erfasst Status und Sachkonto, hier war beides
+unberührt. SQL-Abbild: `specs/migrations/20260801_korrektur_termin_ort_0035.sql`.
+
+Der Verwendungszweck des Belegs wurde **nicht** angefasst: „…nach 5101 (Linie 2)" gibt
+wieder, was auf dem Ticket steht, und beschreibt das Dokument weiterhin zutreffend.
