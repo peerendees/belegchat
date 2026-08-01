@@ -41,6 +41,7 @@
 | `docs/GOBD.md` | GoBD-Dokumentation |
 | `docs/AUTH.md` | Auth (WebAuthn/Passkey) |
 | `docs/PDF-IMPORT.md` | PDF-Batch-Import |
+| `docs/THREEMA-BELEGIMPORT-BEFEHL.md` | Lokale Import-Automatik (Launcher + geplanter 3×/Tag-Job) + Übergabe-Spec für Threema-Befehl & Produkt-Backend |
 | `docs/DATEV.md` | DATEV-Export (Phase 4) |
 | `docs/SCHEMA.md` | DB-Schemaübersicht (Landkarte; Wahrheit: Migrationen im Schwesterrepo) |
 | `docs/POST-ALPHA-PLAN.md` | Hauptplan Phasen 0-4 |
