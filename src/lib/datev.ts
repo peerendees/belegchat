@@ -113,6 +113,47 @@ function q(s: string): string {
   return '"' + sicher + '"';
 }
 
+/** DATEV-Feldgrenzen, gemessen an der Fassung, die wirklich in die Datei geht. */
+const BUCHUNGSTEXT_MAX = 60;
+const ZUSATZINFO_MAX = 210;
+
+/**
+ * Kürzt auf eine DATEV-Feldlänge — NACH der Latin-1-Ersetzung, denn die verlängert:
+ * „→" wird zu „->", „…" zu „...", „€" zu „EUR". Vorher zu kürzen ergab Felder mit
+ * 61 Zeichen (BER-126, belegt an 01-2026-0028/0029).
+ */
+function aufFeldlaenge(s: string, max: number): string {
+  const sicher = latin1Sicher(s);
+  return sicher.length <= max ? sicher : sicher.slice(0, max);
+}
+
+/**
+ * Buchungstext aus Beschreibung + buchungsrelevanten Zusätzen.
+ *
+ * Die Zusätze haben Vorrang und werden zuerst reserviert: fällt „(Teilbetrag)"
+ * weg, sieht eine Teilbuchung im Stapel aus wie eine vollständige. Der
+ * Verwendungszweck bekommt den Rest und wird sichtbar gekürzt (BER-126).
+ */
+function buchungstext(beschreibung: string, zusaetze: string): string {
+  const hinten = aufFeldlaenge(zusaetze, BUCHUNGSTEXT_MAX);
+  const platz = BUCHUNGSTEXT_MAX - hinten.length;
+  const kopf = latin1Sicher(beschreibung);
+  if (kopf.length <= platz) return kopf + hinten;
+  // „..." markiert die Kürzung, damit ein abgeschnittener Text nicht wie eine
+  // seltsam formulierte Beschreibung aussieht.
+  return kopf.slice(0, Math.max(0, platz - 3)).trimEnd() + "..." + hinten;
+}
+
+/** Schreibt ein Zusatzinformations-Paar (Art/Inhalt) in die Zeile. */
+function setzeZusatzinfo(row: string[], nr: number, art: string, inhalt: string): void {
+  const idx = (TRANSACTION_COLUMNS as readonly string[]).indexOf(
+    `Zusatzinformation - Art ${nr}`,
+  );
+  if (idx < 0) return;
+  row[idx] = q(art);
+  row[idx + 1] = q(aufFeldlaenge(inhalt, ZUSATZINFO_MAX));
+}
+
 function betrag(v: string | number): string {
   const n = Math.abs(Number(v));
   return n.toFixed(2).replace(".", ",");
@@ -188,45 +229,36 @@ function belegRow(b: DatevBeleg, meta: DatevMeta): string {
   row[8] = b.bu_schluessel ?? "";
   row[9] = ttmm(b.beleg_datum);            // Belegdatum TTMM
   row[10] = q(b.beleg_nr.slice(0, 36));    // Belegfeld 1
-  let text = b.verwendungszweck || b.beleg_nr;
-  // Auswärts-Beleg: Termin-Kontext in den Buchungstext (betriebliche Veranlassung).
-  if (b.beleg_typ === "auswaerts") {
-    const kontext = [b.termin_grund, b.termin_ort, b.termin_kunde]
-      .map((v) => (v ?? "").trim())
-      .filter(Boolean)
-      .join(" · ");
-    if (kontext) text += ` - ${kontext}`;
-  }
-  if (b.trinkgeld != null && Number(b.trinkgeld) > 0) {
-    text += ` zzgl. Trinkgeld ${betrag(b.trinkgeld)}`;
-  }
-  if (b.gebucht_brutto != null) {
-    text += " (Teilbetrag)";
-  }
-  row[13] = q(text.slice(0, 60)); // Buchungstext (DATEV: max. 60 Zeichen)
+  // Buchungsrelevante Zusätze zuerst — sie dürfen nie der Kürzung zum Opfer fallen.
+  const zusaetze =
+    (b.trinkgeld != null && Number(b.trinkgeld) > 0
+      ? ` zzgl. Trinkgeld ${betrag(b.trinkgeld)}`
+      : "") +
+    (b.gebucht_brutto != null ? " (Teilbetrag)" : "");
+  row[13] = q(buchungstext(b.verwendungszweck || b.beleg_nr, zusaetze));
 
   // Vermerk für den Steuerberater in die dafür vorgesehenen Zusatzinformations-
   // Felder — nicht in den Buchungstext, der ist mit 60 Zeichen schon knapp (BER-109).
   if (b.stb_vermerk) {
-    const artIdx = (TRANSACTION_COLUMNS as readonly string[]).indexOf(
-      "Zusatzinformation - Art 1",
-    );
-    if (artIdx >= 0) {
-      row[artIdx] = q("Hinweis");
-      row[artIdx + 1] = q(b.stb_vermerk.slice(0, 210)); // DATEV: max. 210 Zeichen
-    }
+    setzeZusatzinfo(row, 1, "Hinweis", b.stb_vermerk);
   }
 
   // Beleg ohne Originaldokument (BER-118): eigenes Zusatzinformations-Feld, damit
   // der Steuerberater die noch offene Nachreichung im Stapel erkennt.
   if (b.dokument_fehlt) {
-    const artIdx = (TRANSACTION_COLUMNS as readonly string[]).indexOf(
-      "Zusatzinformation - Art 2",
-    );
-    if (artIdx >= 0) {
-      row[artIdx] = q("Beleg");
-      row[artIdx + 1] = q("fehlt bei Übergabe");
-    }
+    setzeZusatzinfo(row, 2, "Beleg", "fehlt bei Übergabe");
+  }
+
+  // Termin-Kontext eines Auswärts-Belegs (BER-107) — er belegt die betriebliche
+  // Veranlassung der Fahrt und gehört deshalb vollständig in den Stapel. Bis
+  // BER-126 hing er hinten am Buchungstext und wurde von der 60-Zeichen-Grenze
+  // faktisch immer abgeschnitten; hier hat er 210 Zeichen Platz.
+  if (b.beleg_typ === "auswaerts") {
+    const kontext = [b.termin_grund, b.termin_ort, b.termin_kunde]
+      .map((v) => (v ?? "").trim())
+      .filter(Boolean)
+      .join(" · ");
+    if (kontext) setzeZusatzinfo(row, 3, "Termin", kontext);
   }
 
   return row.join(";");
