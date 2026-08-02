@@ -162,3 +162,38 @@ unberührt. SQL-Abbild: `specs/migrations/20260801_korrektur_termin_ort_0035.sql
 
 Der Verwendungszweck des Belegs wurde **nicht** angefasst: „…nach 5101 (Linie 2)" gibt
 wieder, was auf dem Ticket steht, und beschreibt das Dokument weiterhin zutreffend.
+
+---
+
+## Ä-8 · Belegnummern verworfener Entwürfe (Betreiber-Entscheidung 02.08.2026)
+
+Ein Beleg erhält seine Nummer bereits bei der Erfassung — also bevor feststeht, ob er
+gebucht wird. Wird der Entwurf verworfen (Status `neu`, `vorschlag` oder
+`klaerungsbedarf`; freigegebene Belege sind unlöschbar), kann seine Nummer entweder
+erneut vergeben werden oder als Lücke bestehen bleiben. Welcher Fall eintritt, hängt
+von der Reihenfolge ab: die Vergabe bildet die nächste Nummer aus dem Höchstwert der
+**vorhandenen** Belege. War der verworfene Entwurf der höchste, bekommt der nächste
+Beleg dieselbe Nummer; existieren bereits höhere, bleibt die Lücke.
+
+**Festlegung des Betreibers: beides ist zulässig.** Ein verworfener Entwurf war zu
+keinem Zeitpunkt gebucht, festgeschrieben oder exportiert; er hat weder einen
+Buchungssatz erzeugt noch die Kanzlei erreicht. Eine Nummer für einen solchen Entwurf
+dauerhaft zu sperren, brächte keinen Erkenntnisgewinn.
+
+**Was die Nachvollziehbarkeit sichert, ist nicht die Nummer, sondern das Protokoll.**
+Seit dem 02.08.2026 schreibt das Verwerfen einen eigenen, unveränderlichen Eintrag
+(`entwurf_verworfen`) mit Belegnummer, Status und Seitenzahl. Damit ist jeder der
+beiden Fälle aus dem append-only-Protokoll heraus erklärbar:
+
+| Verlauf im Protokoll | Bedeutung |
+|---|---|
+| `erstellt` → `entwurf_verworfen`, Nummer fehlt im Bestand | Entwurf verworfen, Nummer blieb unbesetzt |
+| `erstellt` → `entwurf_verworfen` → `erstellt` | Entwurf verworfen, Nummer neu vergeben |
+
+Die Einträge überdauern den Beleg, weil das Protokoll keinen Fremdschlüssel auf den
+Belegbestand hält und weder geändert noch gelöscht werden kann. Eine fehlende oder
+doppelt auftretende Nummer lässt sich damit immer auf einen konkreten Vorgang
+zurückführen — das ist der Nachweis, den die Nummernfolge tragen muss.
+
+Bewusst nicht geregelt wurde, Lücken aktiv aufzufüllen: eine später wieder belegte
+Lücke wäre schwerer zu lesen als eine, die offen bleibt.

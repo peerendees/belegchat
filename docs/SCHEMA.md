@@ -151,7 +151,7 @@ belegnummern[], duplikatdateien[], fehlerdateien[{datei, grund}]}.
 | ◆ `fn_datev_exporte_schutz` | Export-Fassungen unveränderlich + Hash-Integrität |
 | `log_beleg_aenderungen` | auto-Audit status/sachkonto; ◆ stempelt mandant_id |
 | `update_updated_at` | belege/firmen/mandanten |
-| `naechste_beleg_nr(uuid, date DEFAULT NULL)` | Belegnummern-Vergabe je Mandant/**Belegjahr** (aus `p_beleg_datum`; ohne Parameter now()-Fallback = Erfassungsjahr, rückwärtskompatibel) |
+| `naechste_beleg_nr(uuid, date DEFAULT NULL)` | Belegnummern-Vergabe je Mandant/**Belegjahr** (aus `p_beleg_datum`; ohne Parameter now()-Fallback = Erfassungsjahr, rückwärtskompatibel). Bildet MAX+1 über die **vorhandenen** Belege: die Nummer eines verworfenen Entwurfs kann erneut vergeben werden oder als Lücke bleiben — beides zulässig, erklärt durch `entwurf_verworfen` im Protokoll (Verfahrensdoku Ä-8) |
 | `append_pending_seite` | atomares Seiten-Anhängen (nur Service Role) |
 | `zeitraum_grenzen` | Zeitraum-Helfer |
 
