@@ -113,10 +113,12 @@ BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
 **Aufräumen, sobald jemand Zeit hat (nichts davon blockiert den Betrieb):**
-inaktiver Doppelgänger `K3wxH8xKkTwuc3u0` in n8n löschen (gleicher Webhook-Pfad wie der aktive
-Ergebnis-Workflow, entstand 01.08. durch den fehlenden `id` im Repo-Export — Ursache behoben,
-n8n-workflows #25) · ungetrackte `.env.bak-vor-quoting` im Repo `n8n-workflows` entschärfen
-(von `.gitignore` nicht erfasst, würde bei `git add -A` mit Zugangsdaten mitwandern).
+die beiden **inaktiven** Doppelgänger des Ergebnis-Workflows in n8n löschen — `K3wxH8xKkTwuc3u0`
+(01.08.) und `fswmNEyxSVcxBk5w` (02.08.), beide auf dem Webhook-Pfad des aktiven
+`6GDS7NzfiTRavKjr`. Ursache war die fehlende `id` im Repo-Export; behoben mit n8n-workflows #25.
+**Erst #25 mergen, dann löschen** — solange `main` die `id` nicht trägt, erzeugt jeder Push, der
+die Datei berührt, einen weiteren. · Ungetrackte `.env.bak-vor-quoting` im Repo `n8n-workflows`
+entschärfen (von `.gitignore` nicht erfasst, würde bei `git add -A` mit Zugangsdaten mitwandern).
 
 | Punkt | Referenz |
 |-------|----------|

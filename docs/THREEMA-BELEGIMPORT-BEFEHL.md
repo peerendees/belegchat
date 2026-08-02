@@ -113,11 +113,22 @@ Der Workflow **„GitHub → n8n Synchronisation"** liest die Ziel-ID **aus der 
 **neuen** Workflow an (POST) statt den bestehenden zu aktualisieren (PUT).
 
 Genau das passierte hier: Der erste Repo-Export des Ergebnis-Workflows war auf
-`{name, nodes, connections, settings}` gefiltert. Beim Merge entstand Sekunden später ein zweiter
-Workflow mit demselben Webhook-Pfad `belegchat-import-ergebnis` — inaktiv, deshalb blieb der aktive
-Kanal unberührt. **Regel: Workflow-Exporte immer als vollständigen API-Abzug ablegen**, so wie die
-beiden anderen BelegChat-Workflows. `update-workflow-in-n8n.sh` schützt nur den direkten Weg über
-die API, nicht den Weg über den Sync.
+`{name, nodes, connections, settings}` gefiltert. Es entstanden **zwei** zusätzliche, inaktive
+Workflows mit demselben Webhook-Pfad `belegchat-import-ergebnis` — beim Merge (01.08. 13:52) und
+beim nächsten Push, der die Datei berührte (02.08. 10:15). Der aktive Kanal `6GDS7NzfiTRavKjr`
+blieb unberührt, deshalb lief die Abnahme sauber.
+
+Zwei Eigenheiten des Syncs, die man kennen muss:
+
+- Er reagiert auf **jeden** Push, nicht nur auf `main` (gefiltert wird nur gegen Auto-Backup-Commits).
+- Er holt die Datei **ohne Ref**, also immer vom Standard-Branch. Ein Push auf einen Feature-Branch
+  spielt damit den `main`-Stand nach n8n zurück — solange die `id` fehlt, als neuen Workflow.
+
+**Regel: Workflow-Exporte immer als vollständigen API-Abzug ablegen**, so wie die anderen
+BelegChat-Workflows. Der Sync beschneidet den Payload vor dem PUT selbst
+(`Vorbereite Update` → `{name, nodes, connections, settings}`), der volle Abzug schadet also nicht —
+es fehlt sonst nur die `id`. `update-workflow-in-n8n.sh` schützt nur den direkten Weg über die API,
+nicht den über den Sync.
 
 ### Betrieb
 
