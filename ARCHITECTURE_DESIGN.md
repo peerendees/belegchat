@@ -125,4 +125,5 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `specs/migrations/20260801_korrektur_termin_ort_0035.sql` | Protokoll der Einmal-Korrektur `termin_ort` an 01-2026-0035 (BER-126, Verfahrensdoku Ä-7) |
 | `journal/daily/2026-07-23-baulauf.md` | Abschlussnotiz des Baulaufs S0–S7 |
 | `journal/daily/2026-08-01-belegimport-befehl.md` | Abschlussnotiz BER-124 (Threema-Befehl „Belegimport") |
+| `journal/daily/2026-08-02-n8n-instandsetzung-und-belegpruefung.md` | Tagesnotiz: n8n-Sicherung instand gesetzt (BER-128), Belegdatum-Riegel (BER-129), Nummernvergabe entschieden (BER-130/Ä-8) |
 | `docs/project/intentron-feedback.md` | Rückmeldungen ans INTENTRON-Team (belegt, je Session) |
