@@ -13,6 +13,7 @@ export function FreigabeForm({
   konten,
   istBewirtung = false,
   istAuswaerts = false,
+  belegdatumFehlt = false,
   anlassInitial = "",
   teilnehmerInitial = "",
   trinkgeldInitial = "",
@@ -35,6 +36,8 @@ export function FreigabeForm({
   konten: Konto[];
   istBewirtung?: boolean;
   istAuswaerts?: boolean;
+  /** Ohne Belegdatum ist keine Freigabe möglich (BER-129) — Grund vor dem Klick zeigen. */
+  belegdatumFehlt?: boolean;
   anlassInitial?: string;
   teilnehmerInitial?: string;
   trinkgeldInitial?: string;
@@ -363,12 +366,25 @@ export function FreigabeForm({
         )}
       </div>
       {fehler && <p className="text-sm text-red-600">{fehler}</p>}
-      <Button onClick={freigeben} disabled={laeuft || !zahlungsweg} className="w-full">
+      {belegdatumFehlt && (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <strong>Belegdatum fehlt.</strong> Ohne Datum ist keine Freigabe möglich — im
+          Buchungsstapel stünde sonst ein falsches Datum. Meist fehlt die Seite, auf der es
+          steht: Entwurf löschen und den Beleg vollständig neu senden.
+        </p>
+      )}
+      <Button
+        onClick={freigeben}
+        disabled={laeuft || !zahlungsweg || belegdatumFehlt}
+        className="w-full"
+      >
         {laeuft
           ? "Freigabe läuft …"
-          : !zahlungsweg
-            ? "Zahlungsweg wählen, um freizugeben"
-            : "Beleg freigeben (→ geprüft)"}
+          : belegdatumFehlt
+            ? "Belegdatum fehlt — Freigabe nicht möglich"
+            : !zahlungsweg
+              ? "Zahlungsweg wählen, um freizugeben"
+              : "Beleg freigeben (→ geprüft)"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Mit der Freigabe bestätigst du die Richtigkeit der Belegdaten. Der Beleg
