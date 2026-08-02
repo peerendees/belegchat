@@ -106,6 +106,19 @@ und ohne Workflow-Änderung anpassbar. n8n sendet nur, was ankommt.
 Belegnummern werden zu `0033…0044` zusammengezogen, wenn die Folge lückenlos ist, sonst
 aufgezählt (ab 9 Nummern gekappt).
 
+### Falle beim Ablegen neuer n8n-Workflows
+
+Der Workflow **„GitHub → n8n Synchronisation"** liest die Ziel-ID **aus der Datei**
+(`Parse Workflow`: `workflow.id || ''`). Fehlt das Feld `id`, legt er bei jedem Push einen
+**neuen** Workflow an (POST) statt den bestehenden zu aktualisieren (PUT).
+
+Genau das passierte hier: Der erste Repo-Export des Ergebnis-Workflows war auf
+`{name, nodes, connections, settings}` gefiltert. Beim Merge entstand Sekunden später ein zweiter
+Workflow mit demselben Webhook-Pfad `belegchat-import-ergebnis` — inaktiv, deshalb blieb der aktive
+Kanal unberührt. **Regel: Workflow-Exporte immer als vollständigen API-Abzug ablegen**, so wie die
+beiden anderen BelegChat-Workflows. `update-workflow-in-n8n.sh` schützt nur den direkten Weg über
+die API, nicht den Weg über den Sync.
+
 ### Betrieb
 
 ```bash
@@ -152,7 +165,9 @@ Ablauf der Abnahme (UTC): 15:19:56 legt n8n den Auftrag an · 15:19:59/15:20:00 
 `success` (Sofort-Reply) · 15:20:09 Poller übernimmt · 15:20:14 `erledigt` (Eingang leer, 0/0) ·
 15:20:26 Ergebnis-Workflow `success` · 15:20:32 `gemeldet`.
 
-**Betriebsbeobachtung:** Der Mac verlor am 01.08. mehrfach kurz die Verbindung zum Supabase-Pooler
-(12:37, 13:20–13:47, 14:51–14:55 UTC — `ENOTFOUND`, `EHOSTUNREACH`, `CONNECT_TIMEOUT`). Der Poller
-protokolliert solche Runden und macht weiter; ein Befehl während eines Aussetzers wird bis zu 20 s
-später abgeholt. Häufen sich die Ausfälle, lohnt ein Blick auf Schlafverhalten und WLAN des Macs.
+**Verhalten ohne Netz (belegt am 01.08.):** An einem Reisetag verlor der Mac mehrfach die Verbindung
+zum Supabase-Pooler (`ENOTFOUND`, `EHOSTUNREACH`, `CONNECT_TIMEOUT` — Netzwechsel beim Umsteigen,
+Deckel zwischendurch zu). Der Poller protokolliert solche Runden und macht weiter; nichts ging
+verloren. **Kein Infrastrukturproblem** — unterwegs erwartbar, im Büroalltag nicht. Praktische Folge:
+Ein Befehl, der in ein solches Fenster fällt, wird erst abgearbeitet, wenn der Mac wieder online ist.
+Wer unterwegs importieren will, prüft, ob der Rechner wach und verbunden ist.

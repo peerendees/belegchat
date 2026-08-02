@@ -93,14 +93,30 @@ ermitteln": bei >1 Treffer Fehlerzweig statt erster Zeile — **separat** von de
 **Nächster Schritt:** **2026 ist importiert** (32 Belege `01-2026-0001…0032`); der 2024-Nachzügler
 wurde bewusst mit übernommen (`01-2024-0061`) — StB bucht ihn manuell, daher **kein separater
 2024-Export** dafür. **2025** folgt später (Belege noch nicht vollständig; keine manuelle Erfassung
-gewünscht). Import läuft ab jetzt **automatisch (geplant 3×/Tag 11:50/17:50/21:50)** bzw. per
-Doppelklick-Launcher — Dateien in `Belege/Input` werden zu den Zeiten verarbeitet (Belegjahr-Nummer,
-Fallback `now()` bei fehlendem OCR-Datum). Entwicklungsseitig als Nächstes: **Threema-„Belegimport"-Befehl**
-(Teil 2, `docs/THREEMA-BELEGIMPORT-BEFEHL.md`) — in frischem Chat.
+gewünscht). Import läuft **automatisch (geplant 3×/Tag 11:50/17:50/21:50)**, per Doppelklick-Launcher
+oder per Threema-Befehl `Belegimport` — Dateien in `Belege/Input` werden dann verarbeitet
+(Belegjahr-Nummer, Fallback `now()` bei fehlendem OCR-Datum).
+
+**Vor dem ersten Auswärts-Export beachten:** Der DATEV-Buchungstext wurde am 01.08. repariert
+(BER-126) — bis dahin erreichte der Termin-Kontext den Stapel nie, und zwei Sätze lagen über dem
+60-Zeichen-Limit. Betroffen sind ausschließlich noch **nicht exportierte** Belege; es muss nichts
+nacherzeugt werden. Beim nächsten Export lohnt ein Blick in die Datei, ob der Kontext als
+Zusatzinformation ankommt.
+
+**Der Betrieb läuft ohne Zutun weiter:** Poller (`de.berent.belegchat.poller`) und geplanter Job
+(`de.berent.belegchat.import`) sind installiert, alle drei BelegChat-n8n-Workflows aktiv. Fällt der
+Mac aus (Reise, Deckel zu), sammeln sich die Aufträge und werden abgearbeitet, sobald er wieder
+online ist — belegt am 01.08.
 
 Folge-Stories: BER-125 (Import-Befehl im Dashboard verwalten — Teil 3),
 BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
+
+**Aufräumen, sobald jemand Zeit hat (nichts davon blockiert den Betrieb):**
+inaktiver Doppelgänger `K3wxH8xKkTwuc3u0` in n8n löschen (gleicher Webhook-Pfad wie der aktive
+Ergebnis-Workflow, entstand 01.08. durch den fehlenden `id` im Repo-Export — Ursache behoben,
+n8n-workflows #25) · ungetrackte `.env.bak-vor-quoting` im Repo `n8n-workflows` entschärfen
+(von `.gitignore` nicht erfasst, würde bei `git add -A` mit Zugangsdaten mitwandern).
 
 | Punkt | Referenz |
 |-------|----------|
