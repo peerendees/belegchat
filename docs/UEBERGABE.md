@@ -112,13 +112,23 @@ Folge-Stories: BER-125 (Import-Befehl im Dashboard verwalten — Teil 3),
 BER-120 (Kontenrahmen mandantenfähig), BER-122 (mehrere MwSt-Sätze),
 Feature-Registry `docs/FEATURE-WUENSCHE.md`.
 
+✓ Die beiden inaktiven Doppelgänger des Ergebnis-Workflows sind gelöscht (02.08.); die Ursache —
+fehlende `id` im Repo-Export — ist mit n8n-workflows #25 behoben.
+
 **Aufräumen, sobald jemand Zeit hat (nichts davon blockiert den Betrieb):**
-die beiden **inaktiven** Doppelgänger des Ergebnis-Workflows in n8n löschen — `K3wxH8xKkTwuc3u0`
-(01.08.) und `fswmNEyxSVcxBk5w` (02.08.), beide auf dem Webhook-Pfad des aktiven
-`6GDS7NzfiTRavKjr`. Ursache war die fehlende `id` im Repo-Export; behoben mit n8n-workflows #25.
-**Erst #25 mergen, dann löschen** — solange `main` die `id` nicht trägt, erzeugt jeder Push, der
-die Datei berührt, einen weiteren. · Ungetrackte `.env.bak-vor-quoting` im Repo `n8n-workflows`
-entschärfen (von `.gitignore` nicht erfasst, würde bei `git add -A` mit Zugangsdaten mitwandern).
+Ungetrackte `.env.bak-vor-quoting` im Repo `n8n-workflows` entschärfen (von `.gitignore` nicht
+erfasst, würde bei `git add -A` mit Zugangsdaten mitwandern) · [BER-127](https://linear.app/berent/issue/BER-127)
+Threema-Gateway-Secret \*BERENT1 rotieren (lag im Klartext im n8n-Backup-Workflow und liegt in der
+Git-Historie; Node inzwischen auf `$env` umgestellt).
+
+**Seit 02.08. sichert n8n sich selbst wieder nach GitHub** ([BER-128](https://linear.app/berent/issue/BER-128)):
+der Workflow `n8n GitHub Backup` läuft alle 15 Minuten von 7 bis 22 Uhr und schreibt jeden
+Workflow nach `n8n-workflows/n8n/{id}/`. Für BelegChat heißt das: **die Repo-Exporte der drei
+Workflows werden ab jetzt maschinell gepflegt.** Wer einen davon in n8n ändert, muss den Export
+nicht mehr von Hand nachziehen — er kommt binnen einer Viertelstunde von allein. Wer umgekehrt
+die Datei im Repo ändert und merged, spielt sie über den Sync nach n8n zurück; dabei gilt
+weiterhin: **Export immer als vollständiger API-Abzug mit `id`**, sonst legt der Sync einen
+zweiten Workflow an statt zu aktualisieren.
 
 | Punkt | Referenz |
 |-------|----------|
