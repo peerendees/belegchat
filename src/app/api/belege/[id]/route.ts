@@ -9,6 +9,10 @@ import { withMandant } from "@/lib/db";
  * kann danach neu erfasst werden (Duplikatschutz bleibt für alles Übrige aktiv).
  * Storage-Original bleibt als Waise bestehen (unkritisch: Entwurf, neuer
  * Import erzeugt ohnehin einen neuen Pfad).
+ *
+ * Das Verwerfen wird als `entwurf_verworfen` protokolliert (BER-130) — die
+ * verworfene Belegnummer bleibt damit erklärbar, auch wenn dadurch eine Lücke in
+ * der Nummernfolge entsteht.
  */
 export async function DELETE(
   _req: NextRequest,
@@ -23,11 +27,28 @@ export async function DELETE(
 
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
-      const belege = await tx`SELECT beleg_nr, status FROM belege WHERE id = ${id} LIMIT 1`;
+      const belege = await tx`
+        SELECT beleg_nr, status, mandant_id FROM belege WHERE id = ${id} LIMIT 1`;
       if (belege.length === 0) return { status: 404 as const };
       if (!["neu", "vorschlag", "klaerungsbedarf"].includes(belege[0].status as string)) {
         return { status: 409 as const, fehler: `Beleg ist ${belege[0].status} und kann nicht gelöscht werden` };
       }
+      const [{ anzahl: seitenAnzahl }] = await tx`
+        SELECT count(*)::int AS anzahl FROM beleg_seiten WHERE beleg_id = ${id}`;
+
+      // Verwerfen protokollieren, BEVOR gelöscht wird (BER-130). Ohne diesen
+      // Eintrag wäre eine Lücke in der Belegnummernfolge zwar erschließbar —
+      // Nummer fehlt in belege, `erstellt`-Eintrag existiert noch —, aber nirgends
+      // dokumentiert. Der Eintrag überlebt den Beleg, weil audit_log.beleg_id
+      // keinen Fremdschlüssel trägt, und erklärt die Lücke von sich aus.
+      await tx`
+        INSERT INTO audit_log (beleg_id, mandant_id, aktion, alter_wert, neuer_wert)
+        VALUES (
+          ${id}, ${belege[0].mandant_id as string}, 'entwurf_verworfen',
+          ${`${belege[0].beleg_nr as string} (${belege[0].status as string}, ${seitenAnzahl} Seite${seitenAnzahl === 1 ? "" : "n"})`},
+          'Entwurf verworfen — Beleg und Seiten gelöscht, Datei-Hash wieder frei'
+        )`;
+
       // Seiten zuerst (Beleg existiert noch → RLS-Policy greift), dann Beleg
       await tx`DELETE FROM beleg_seiten WHERE beleg_id = ${id}`;
       await tx`DELETE FROM belege WHERE id = ${id}`;
