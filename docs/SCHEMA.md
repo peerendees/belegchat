@@ -112,7 +112,8 @@ Code-Nodes — bei Kontenänderungen nachziehen!
 ## audit_log (append-only)
 
 id bigserial, beleg_id (◆ nullable — NULL nur für export_eingefroren/
-export_ersetzt, CHECK), aktion (CHECK, 16 Werte — s. Migration §5), alter_wert,
+export_ersetzt, CHECK), aktion (CHECK — Wahrheit ist der Constraint
+`audit_log_aktion_check`, zuletzt erweitert um ➕ `entwurf_verworfen`), alter_wert,
 neuer_wert, user_id, created_at, mandant_id. Trigger verbietet UPDATE/DELETE.
 Achtung Altdaten: 125 `status_change`-Zeilen tragen mandant_id NULL (Trigger
 stempelte bis 20260723 nicht) — mandantenscopierte Auswertungen über
