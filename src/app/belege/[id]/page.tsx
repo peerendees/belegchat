@@ -249,6 +249,7 @@ export default async function BelegDetailPage({
             <div className="space-y-3">
               <FreigabeForm
                 belegId={id}
+                belegdatumFehlt={!beleg.beleg_datum}
                 aktuellesSachkonto={beleg.sachkonto as string}
                 konten={konten.map((k) => ({
                   konto_nr: k.konto_nr as string,

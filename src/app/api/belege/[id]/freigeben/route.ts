@@ -81,12 +81,29 @@ export async function POST(
   try {
     const result = await withMandant(session.mandantId, async (tx) => {
       const belege = await tx`
-        SELECT id, beleg_nr, status, sachkonto, beleg_typ, betrag_brutto, mwst_satz
+        SELECT id, beleg_nr, status, sachkonto, beleg_typ, betrag_brutto, mwst_satz, beleg_datum
           FROM belege WHERE id = ${id} LIMIT 1`;
       if (belege.length === 0) return { status: 404 as const };
       const beleg = belege[0];
       if (!["vorschlag", "klaerungsbedarf"].includes(beleg.status as string)) {
         return { status: 409 as const, fehler: `Beleg ist bereits ${beleg.status}` };
+      }
+
+      // Belegdatum ist Pflicht (BER-129). Ohne Datum trägt der DATEV-Export still
+      // "0101" ein: der Stapel baut das Feld aus `new Date(beleg_datum)`, und aus
+      // NULL wird der 1.1.1970 — eine gültig aussehende, falsche Angabe ohne
+      // Fehlermeldung. Nach der Freigabe wäre der Beleg festgeschrieben und
+      // beleg_datum steht nicht auf der Whitelist; die Korrektur bräuchte dann den
+      // protokollierten Eingriff. Deshalb hier abfangen, nicht später heilen.
+      // Häufigste Ursache: nur die erste Seite fotografiert, das Datum steht auf
+      // der zweiten. Dann Entwurf löschen und vollständig neu senden.
+      if (!beleg.beleg_datum) {
+        return {
+          status: 422 as const,
+          fehler:
+            "Belegdatum fehlt — ohne Datum ist keine Freigabe möglich. " +
+            "Meist fehlt die Seite, auf der es steht: Entwurf löschen und den Beleg vollständig neu senden.",
+        };
       }
 
       // Bewirtung: Anlass + Teilnehmer sind Pflicht (§ 4 Abs. 5 Nr. 2 EStG)
