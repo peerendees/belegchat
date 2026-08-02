@@ -106,6 +106,30 @@ und ohne Workflow-Änderung anpassbar. n8n sendet nur, was ankommt.
 Belegnummern werden zu `0033…0044` zusammengezogen, wenn die Folge lückenlos ist, sonst
 aufgezählt (ab 9 Nummern gekappt).
 
+### Falle beim Ablegen neuer n8n-Workflows
+
+Der Workflow **„GitHub → n8n Synchronisation"** liest die Ziel-ID **aus der Datei**
+(`Parse Workflow`: `workflow.id || ''`). Fehlt das Feld `id`, legt er bei jedem Push einen
+**neuen** Workflow an (POST) statt den bestehenden zu aktualisieren (PUT).
+
+Genau das passierte hier: Der erste Repo-Export des Ergebnis-Workflows war auf
+`{name, nodes, connections, settings}` gefiltert. Es entstanden **zwei** zusätzliche, inaktive
+Workflows mit demselben Webhook-Pfad `belegchat-import-ergebnis` — beim Merge (01.08. 13:52) und
+beim nächsten Push, der die Datei berührte (02.08. 10:15). Der aktive Kanal `6GDS7NzfiTRavKjr`
+blieb unberührt, deshalb lief die Abnahme sauber.
+
+Zwei Eigenheiten des Syncs, die man kennen muss:
+
+- Er reagiert auf **jeden** Push, nicht nur auf `main` (gefiltert wird nur gegen Auto-Backup-Commits).
+- Er holt die Datei **ohne Ref**, also immer vom Standard-Branch. Ein Push auf einen Feature-Branch
+  spielt damit den `main`-Stand nach n8n zurück — solange die `id` fehlt, als neuen Workflow.
+
+**Regel: Workflow-Exporte immer als vollständigen API-Abzug ablegen**, so wie die anderen
+BelegChat-Workflows. Der Sync beschneidet den Payload vor dem PUT selbst
+(`Vorbereite Update` → `{name, nodes, connections, settings}`), der volle Abzug schadet also nicht —
+es fehlt sonst nur die `id`. `update-workflow-in-n8n.sh` schützt nur den direkten Weg über die API,
+nicht den über den Sync.
+
 ### Betrieb
 
 ```bash
@@ -152,7 +176,9 @@ Ablauf der Abnahme (UTC): 15:19:56 legt n8n den Auftrag an · 15:19:59/15:20:00 
 `success` (Sofort-Reply) · 15:20:09 Poller übernimmt · 15:20:14 `erledigt` (Eingang leer, 0/0) ·
 15:20:26 Ergebnis-Workflow `success` · 15:20:32 `gemeldet`.
 
-**Betriebsbeobachtung:** Der Mac verlor am 01.08. mehrfach kurz die Verbindung zum Supabase-Pooler
-(12:37, 13:20–13:47, 14:51–14:55 UTC — `ENOTFOUND`, `EHOSTUNREACH`, `CONNECT_TIMEOUT`). Der Poller
-protokolliert solche Runden und macht weiter; ein Befehl während eines Aussetzers wird bis zu 20 s
-später abgeholt. Häufen sich die Ausfälle, lohnt ein Blick auf Schlafverhalten und WLAN des Macs.
+**Verhalten ohne Netz (belegt am 01.08.):** An einem Reisetag verlor der Mac mehrfach die Verbindung
+zum Supabase-Pooler (`ENOTFOUND`, `EHOSTUNREACH`, `CONNECT_TIMEOUT` — Netzwechsel beim Umsteigen,
+Deckel zwischendurch zu). Der Poller protokolliert solche Runden und macht weiter; nichts ging
+verloren. **Kein Infrastrukturproblem** — unterwegs erwartbar, im Büroalltag nicht. Praktische Folge:
+Ein Befehl, der in ein solches Fenster fällt, wird erst abgearbeitet, wenn der Mac wieder online ist.
+Wer unterwegs importieren will, prüft, ob der Rechner wach und verbunden ist.
