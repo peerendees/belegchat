@@ -41,6 +41,7 @@
 | `docs/GOBD.md` | GoBD-Dokumentation |
 | `docs/AUTH.md` | Auth (WebAuthn/Passkey) |
 | `docs/PDF-IMPORT.md` | PDF-Batch-Import |
+| `../n8n-workflows/BETRIEBSSYSTEM.md` | **Betriebs-Landkarte** (Nachbar-Repo): alle aktiven n8n-Workflows mit Auslöser und berührten Systemen, BelegChat-Abläufe in der Tiefe, Kreuzungen zwischen Sync und Backup |
 | `docs/THREEMA-BELEGIMPORT-BEFEHL.md` | Import-Auslöser: Launcher, geplanter 3×/Tag-Job und Threema-Befehl „Belegimport" (BER-124, live) + Spec Produkt-Backend (BER-125) |
 | `docs/DATEV.md` | DATEV-Export (Phase 4) |
 | `docs/SCHEMA.md` | DB-Schemaübersicht (Landkarte; Wahrheit: Migrationen im Schwesterrepo) |
