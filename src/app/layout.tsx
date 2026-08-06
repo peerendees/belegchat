@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BelegChat",
   description: "Belegeingang, Kontierung und Freigabe — BERENT.AI",
+};
+
+// BERENT-CI Warm Brown — tönt die Browser-/Statusleiste auf Mobilgeräten.
+export const viewport: Viewport = {
+  themeColor: "#80331A",
 };
 
 export default function RootLayout({
