@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { withMandant } from "@/lib/db";
 import { euro, datum } from "@/lib/format";
-
-const EDGE_URL =
-  (process.env.SUPABASE_URL || "https://xuqefeewzdvjhuquciut.supabase.co") +
-  "/functions/v1/threema-decrypt";
+import { edgePdf } from "@/lib/edge";
 
 /**
  * Deckblatt als PDF: Kopfseite mit den Pflicht-/Kontext-Angaben + Original-
@@ -110,38 +107,28 @@ export async function GET(
     return NextResponse.json({ error: "Für diesen Beleg-Typ gibt es kein Deckblatt" }, { status: 422 });
   }
 
-  const res = await fetch(EDGE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+  const result = await edgePdf(token, {
+    action,
+    angaben: {
+      titel,
+      untertitel,
+      felder,
+      fusszeile,
+      erstellt: datum(new Date().toISOString()),
     },
-    body: JSON.stringify({
-      action,
-      angaben: {
-        titel,
-        untertitel,
-        felder,
-        fusszeile,
-        erstellt: datum(new Date().toISOString()),
-      },
-      seiten: seiten.map((s) => ({
-        storage_path: s.storage_path as string,
-        mime_type: s.mime_type as string,
-      })),
-    }),
+    seiten: seiten.map((s) => ({
+      storage_path: s.storage_path as string,
+      mime_type: s.mime_type as string,
+    })),
   });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.pdfBase64) {
+  if (!result.ok) {
     return NextResponse.json(
-      { error: data.error || "Deckblatt-Erzeugung fehlgeschlagen" },
-      { status: 502 },
+      { error: result.error || "Deckblatt-Erzeugung fehlgeschlagen" },
+      { status: result.status },
     );
   }
 
-  const pdf = Buffer.from(data.pdfBase64 as string, "base64");
-  return new NextResponse(new Uint8Array(pdf), {
+  return new NextResponse(new Uint8Array(result.pdf), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
