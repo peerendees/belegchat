@@ -298,6 +298,14 @@ export default async function BelegDetailPage({
               <CardTitle className="text-base">Seiten ({seiten.length})</CardTitle>
             </CardHeader>
             <CardContent className="text-sm">
+              {seiten.length > 0 && (
+                <a
+                  href={`/api/belege/${id}/original`}
+                  className="mb-3 inline-block underline underline-offset-2"
+                >
+                  Original herunterladen (PDF, alle Seiten)
+                </a>
+              )}
               {seiten.map((s) => (
                 <div key={s.seite_nr as number} className="border-b py-2 last:border-0">
                   <div className="flex justify-between">
