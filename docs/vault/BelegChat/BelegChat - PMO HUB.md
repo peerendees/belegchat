@@ -32,11 +32,12 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 | **Post-Alpha** | **Phase 1 GoBD abgeschlossen** (DB + Edge + n8n live, E2E `01-2026-0005`, 2026-07-11) — PRs offen |
 | **Echtbetrieb** | seit 2026-07-15 initialisiert; Stand 2026-08-08: **130 Belege** |
 
-> [!warning] Lücke in dieser Datei: 19.07.–02.08.2026
-> Die Arbeit an BER-116 bis BER-139 (StB-Rückmeldung, Vorsteuer-/Steuerschlüssel,
-> Belegimport-Befehl, n8n-Instandsetzung, Belegdatum-Riegel, Nummernvergabe) ist hier
-> nie nachgetragen worden. Wahrheit dafür sind Linear, `belegchat/journal/daily/` und
-> `docs/audits/`. Der Eintrag vom 08.08. schließt daran an, ohne die Lücke zu füllen.
+> [!info] Nachtrag 08.08.2026
+> Diese Datei endete zuvor am 12.07.2026 — vier Wochen Arbeit (BER-97 bis BER-131) waren
+> nie eingetragen. Am 08.08. Issue für Issue nachgezogen aus Linear, den Git-Historien
+> beider Repos, `belegchat/journal/daily/` und `docs/audits/`. Die Einträge unten geben
+> wieder, was belegt ist; wo eine Aussage nur aus einer Commit-Nachricht stammt, steht es
+> dabei.
 
 ## Erledigt 2026-07-10 (Beta)
 
@@ -124,6 +125,94 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 
 **Post-Alpha-Plan damit vollständig abgearbeitet** — offen nur externe Schritte (StB-Nummern, DATEV-Abnahme, Threema-Foto, Secret-Verifikationen).
 
+## Erledigt 2026-07-13 bis 07-18 (Echtbetrieb-Vorbereitung)
+
+- [x] **BER-97 Proton-Mail-Scan** (13.07.): E-Mail-Rechnungen automatisch in den Beleg-Input
+- [x] **BER-99 Bewirtungsbelege + Entwurf löschen** (18.07.): Auto-Erkennung → 6640 + Klärungsbedarf, Pflichtfelder Anlass/Teilnehmer, Trinkgeld-Feld (KI + manuell, Deckblatt + DATEV-Buchungstext), Deckblatt-PDF per Edge-Rendering
+- [x] **Initialisierung 15.07.**: alle Testdaten entfernt (44 Belege, 106 Audit-Einträge, 2 Exporte), Schutz-Trigger nur transaktional deaktiviert und verifiziert reaktiviert. **Ab hier Echtbestand**, Nummern ab `01-2026-0001`
+- [x] NordPass-Passkey-Fix (`requireUserVerification: false`)
+
+## Erledigt 2026-07-19/20 (Erfassungslücken aus dem Echtbetrieb — BER-107..115)
+
+Neun Befunde aus dem laufenden Erfassen, an zwei Tagen abgearbeitet.
+
+- [x] **BER-107 Termin-Kontext für Auswärts-Belege** (Taxi, Bahn, ÖPNV): Ort, Kunde, Grund + Trinkgeld
+- [x] **BER-108 Teilbeträge bei Rechnungsbelegen**: nur einen Teil buchen (brutto **oder** netto); `betrag_*` bleibt Dokumentbetrag (GoBD), `gebucht_*` trägt die Buchung, DATEV bucht `COALESCE(gebucht_*, betrag_*)` mit Buchungstext „(Teilbetrag)"
+- [x] **BER-109 Anlagevermögen/AfA erkennen**: Klärungsbedarf + StB-Vermerk im DATEV-Export (Migration `stb_vermerk` + Festschreibung)
+- [x] **BER-110 Plausibilitätsprüfung Netto/Brutto** → Klärungsbedarf, plus Konto 6805 Telefon. Prüft bewusst nur `netto + mwst = brutto` — verträgt Mischsätze und wurde deshalb von BER-122 nicht angefasst
+- [x] **BER-111 Import-Watcher**: Scan-Lock gegen überlappende Läufe (Rate-Limit + Belegnummern-Kollision)
+- [x] **BER-112 Detailansicht**: Navigation vor/zurück per Pfeiltasten — am 20.07. nachgebessert, die Vorgänger-Navigation zeigte auf den Beleg selbst
+- [x] **BER-113 Beleg manuell erfassen** + Originaldokument nachreichen (DB-Schicht 20.07.: Grants + RLS) — **später von BER-118 revidiert**
+- [x] **BER-114 Zeitanzeige**: serverseitige Formatierung nutzte UTC statt Europe/Berlin (2 Stunden zurück)
+- [x] **BER-115 DATEV-Export**: Jahres-Auswahl aus den Belegdaten statt fester Spanne — 2024 fehlte in der Auswahl
+- [x] Ohne eigenes Issue: DATEV-Buchungstext Latin-1-sicher gemacht (19.07.)
+
+## Erledigt 2026-07-22/23 (StB-Rückmeldung — Konzeption + Baulauf S0–S7)
+
+Die Rückmeldung der Steuerkanzlei erzeugte sechs zusammenhängende Stories. Erst Konzeption
+mit Specs, konsolidierter Migration, Strukturprüfung und Runbook, dann ein **serieller
+Baulauf S0–S7** an einem Tag. Abschlussnotiz: `belegchat/journal/daily/2026-07-23-baulauf.md`.
+
+- [x] **S1 Konsolidierte Migration** auf Prod angewendet + **14 Trigger-Tests grün** (Rollback-Transaktion)
+- [x] **BER-116 Zahlungsweg am Beleg**: Gegenkonto 1800 (Geschäftskonto) / 1810 (alternativ) / 2100 (privat)
+- [x] **BER-117 Vorsteuer im Buchungsstapel**: BU-/Steuerschlüssel pro Beleg in Spalte 9, Konfigurationstabelle `steuerschluessel` mit `mwst_satz`-Schlüssel (Seeds 19→`90`, 7→`80`, kanzleibestätigt). **Diese Tabelle ist die Vorleistung, die BER-122 später additiv möglich gemacht hat**
+- [x] **BER-121 DATEV-Exporte nachvollziehbar**: Inhalts-Hash, Versionierung, Korrekturfassungen, Einfrieren
+- [x] **BER-119 Altbestand 2024 nacherfassen** und korrigierten Buchungsstapel neu ausliefern
+- [x] **BER-118 Beleg ohne Dokument freigeben** + Dokument nach der Festschreibung nachreichen (revidiert BER-113)
+- [x] Korrektur des 2024-Altbestands vor der Erstabgabe (6 Fehlkontierungen, Belegnummern 2026→2024) + Verfahrensdoku Ä-5.1
+- [x] Audits: `docs/audits/2026-07-22-validierung-ber-116-119.md`, `docs/audits/2026-07-23-strukturpruefung-ausbaustufe.md`
+
+> [!important] Der Trigger-Test hat einen echten Fehler gefunden
+> **T10 meldete `42P17 infinite recursion detected in policy for relation "beleg_seiten"`.**
+> Die neue Policy `dash_seiten_insert` referenzierte `beleg_seiten` aus einer Policy *auf*
+> `beleg_seiten` heraus. Kein Live-Pfad war betroffen (n8n schreibt als `service_role` an RLS
+> vorbei, der manuelle Upload-Pfad war noch nicht gebaut), aber die Policy war falsch. Fix als
+> eigene Korrektur-Migration: Policy auf reinen Mandanten-Scope reduziert, die fachliche Regel
+> in einen `SECURITY DEFINER`-`BEFORE INSERT`-Trigger verlagert.
+> **Diese Regel ist seither Projektwissen** — BER-122 hat ihre Policies von Anfang an ohne
+> Selbstbezug gebaut, statt erneut hineinzulaufen.
+
+> [!warning] Nicht geprüft im Baulauf
+> Die **interaktive E2E-Prüfung hinter dem Passkey-Login ist nicht erfolgt** (in dieser
+> Umgebung kein Login möglich). Abgesichert sind die DB-Semantik über die 14 Rollback-Tests
+> auf Prod und typecheck/lint/build je PR — nicht die Oberfläche.
+
+## Erledigt 2026-07-30/31 (Revision vor dem 2025/26-Import)
+
+- [x] **Belegnummer nach Belegjahr** statt Erfassungsjahr (`naechste_beleg_nr(uuid, date)`), Konto 6520 deaktiviert — Migration `20260730230148`
+- [x] **PDF-Import Einmal-Modus** (`watch --once`) + Doppelklick-Launcher
+- [x] **Semgrep-Gate-Hygiene**: vorbestehende Findings bereinigt, Pre-Commit-Hook läuft grün (belegchat #48)
+- [x] Übergabe-Stand 31.07.: Revision live, K2 beim Steuerberater
+
+## Erledigt 2026-08-01 (Threema-Befehl + Buchungstext — BER-124, BER-126)
+
+- [x] **BER-124 Threema-Befehl „Belegimport"**: Import vom Handy anstoßen, mit voller Ergebnis-Rückmeldung — Poller, Bilanz-Ausgabe, Import-Sperre, eigene Migration, dritter n8n-Workflow (`6GDS7NzfiTRavKjr`) für die Ergebnismeldung. Freigabe pro Threema-ID über `mandanten.import_befehl_aktiv` (Default `false`)
+- [x] **BER-126 DATEV-Buchungstext**: der Termin-Kontext hing hinten am Buchungstext und wurde von der 60-Zeichen-Grenze faktisch immer abgeschnitten. Jetzt in den Zusatzinformations-Feldern mit 210 Zeichen Platz. Dazu die Einmal-Korrektur `termin_ort` an Beleg `01-2026-0035` vor dem ersten Auswärts-Export + Verfahrensdoku Ä-7
+- [ ] **BER-125 offen**: Import-Befehl im Dashboard verwalten (berechtigte Threema-IDs, Kommando-Historie, „Import jetzt")
+
+## Erledigt 2026-08-02 (n8n-Instandsetzung + zwei Belegprüfungs-Lücken)
+
+Tagesnotiz: `belegchat/journal/daily/2026-08-02-n8n-instandsetzung-und-belegpruefung.md`.
+
+- [x] **BER-128 n8n-Backup und GitHub-Sync instand gesetzt** (Projekt *n8n und Infrastruktur*): seit Monaten abgeschaltet. Sechs Befunde, darunter zwei mit Schadenspotenzial — der Sync hätte nach jedem Update aktualisierte Workflows **abgeschaltet** (auch den BelegChat-Threema-Eingang), und der Cleanup-Zweig löschte frisch geschriebene Sicherungen. Beide Zweige **stillgelegt statt repariert**. Beide Workflows aktiv seit 13:06, Dauerbetrieb im Regellauf bestätigt
+- [x] **BER-129 Freigabe ohne Belegdatum verhindert** — der Export schrieb sonst still den 1. Januar. Server + Oberfläche
+- [x] **BER-130 Verwerfen eines Entwurfs wird protokolliert**; Nummernvergabe entschieden (Variante B: Lücke oder Wiederverwendung, beides zulässig) — Verfahrensdoku Ä-8
+- [ ] **BER-127 offen**: Threema-Gateway-Secret (*BERENT1) rotieren — lag im Klartext im Backup-Workflow und in der Git-Historie. Node auf `$env` umgestellt, **Rotation ist Betreiber-Sache** (Projekt *n8n und Infrastruktur*)
+
+> [!note] Das Muster des 02.08.: eine Information an zwei Stellen
+> Dreimal derselbe Fehlertyp, zweimal mit Schaden — die Workflow-`id` (Datei vs.
+> Sync-Erwartung) erzeugte zwei Doppelgänger auf demselben Webhook-Pfad, die
+> Dateinamen-Regel (Extrahieren vs. Cleanup) löschte Sicherungen. Konsequenz fürs Projekt:
+> vor dem Ändern einer Regel nach weiteren Verwendungen suchen, und Datei-Historie mit
+> `git log --name-status` prüfen statt mit `git diff A..B` — ein Bereichs-Diff verschweigt
+> Dateien, die im selben Bereich angelegt und wieder gelöscht wurden.
+
+## Erledigt 2026-08-06/07 (Dashboard-Feinschliff — BER-131)
+
+- [x] **BER-131 Original-Beleg als Gesamt-PDF herunterladen** + Deckblatt-Retry
+- [x] B+E-Favicon und PWA-Icon-Set im Dashboard, Web-Manifest; `favicon.ico` für Safari nachgezogen
+- [x] **Ausbaustufen-Backlog angelegt** (07.08.): BER-132 Mandantenfähigkeit & Abo · BER-133 Mandantentrennung & Betreibersicht · BER-134 Onboarding automatisieren · BER-135 Abo/Abrechnung/Modul-Dashboard · BER-136 Reisekosten-Modul · BER-137 Erlösseite · BER-138 Storno & Generalumkehr · BER-139 Zahlungsabgleich CAMT/MT940 — alle offen
+
 ## Erledigt 2026-08-08 (BER-122 Stufe 1 — Mehrere MwSt-Sätze)
 
 Restaurant- und Supermarktbelege führen 7 % und 19 % nebeneinander; `belege` trug bisher
@@ -148,7 +237,7 @@ BER-121 nur per Korrekturfassung behebbar.
 
 | Stufe | Issue | Inhalt | Stand |
 |---|---|---|---|
-| 1 | [BER-122](https://linear.app/berent/issue/BER-122) | Datenmodell + Trigger + RLS | **angewendet 08.08.** |
+| 1 | [BER-122](https://linear.app/berent/issue/BER-122) | Datenmodell + Trigger + RLS | **angewendet 08.08., Issue Done** |
 | 2 | [BER-140](https://linear.app/berent/issue/BER-140) | DATEV-Export `belegRow → belegRows` | **startklar** |
 | 3 | [BER-141](https://linear.app/berent/issue/BER-141) | Steuerzeilen-Editor + Freigabe-Route | offen |
 | 4 | [BER-142](https://linear.app/berent/issue/BER-142) | n8n: KI-Schema `steuerzeilen[]` | offen |
@@ -189,11 +278,36 @@ Siehe auch [[Research/Post-Alpha-Roadmap]].
 
 ## SOP-Lage
 
-| Ort | Anzahl | Hinweis |
-|-----|--------|---------|
-| Vault BelegChat | 2 SOPs/Roadmaps + 2 ADRs | Single Source of Truth |
+| Ort | Bestand | Hinweis |
+|-----|---------|---------|
+| Vault BelegChat | `Research/` (4 SOPs + 2 Roadmaps/Pläne) · `Decisions/` (ADR-01..05) | Single Source of Truth |
 | Notion | ~49 | Eigenes Migrationsprojekt — **kein Alpha-Blocker** |
-| Second Brain | Sync aus Vault | `berent-2nd-brain/02 Projekte/BelegChat/` |
+| Second Brain | Sync aus Vault | `/Users/kunkel/BERENT-2nd-Brain/02 Projekte/BelegChat/` |
+
+**Research:** [[Research/SOP-Threema-Belegeingang]] · [[Research/SOP-PDF-Import]] · [[Research/SOP-Dashboard-Auth]] · [[Research/SOP-DATEV-Export]] · [[Research/POST-ALPHA-Implementierungsplan]] · [[Research/Post-Alpha-Roadmap]]
+
+**Decisions:** [[Decisions/ADR-01 Mehrseiten-Ziffern-UX]] (superseded) · [[Decisions/ADR-02 Mehrseiten-Fertig-UX]] · [[Decisions/ADR-03 GoBD-Härtung DB]] · [[Decisions/ADR-04 PDF als GoBD-Original]] · [[Decisions/ADR-05 Dashboard-Zugriffsmodell]]
+
+> Die frühere Fassung dieser Tabelle zählte „2 SOPs/Roadmaps + 2 ADRs" — falsch seit dem
+> 12.07. Ein Zähler, der eine Liste beschreibt, veraltet still. Deshalb steht die Liste
+> jetzt daneben.
+
+## Offene Punkte (Stand 08.08.2026)
+
+Zusammengezogen aus den Abschnitten oben — Wahrheit bleibt Linear.
+
+| Thema | Issue | Anmerkung |
+|---|---|---|
+| Mehrsatz-Belege Stufen 2–5 | BER-140..143 | BER-140 startklar, Rest verkettet |
+| Import-Befehl im Dashboard verwalten | BER-125 | Ergänzung zu BER-124 |
+| Kontenrahmen mandantenfähig, SKR03-Reste | BER-120 | |
+| Vollständigkeitsexport (Vertragsende) | BER-123 | |
+| Lieferanten-Kontierungsgedächtnis | BER-98 | Anlernen aus 2024 |
+| Ausbaustufe Mandantenfähigkeit & Abo | BER-132..139 | Backlog vom 07.08. |
+| **Threema-Gateway-Secret rotieren** | BER-127 | Projekt *n8n und Infrastruktur* — **Betreiber-Sache** |
+| Supabase-Advisor-Altbefunde | *(kein Issue)* | 3 `SECURITY DEFINER`-Views auf **ERROR**-Level, 3 RPC-exponierte Alt-Funktionen, `pg_trgm` in `public` — am 08.08. aufgefallen |
+| Interaktive E2E hinter dem Passkey-Login | *(kein Issue)* | seit dem Baulauf 23.07. offen — DB-Semantik ist getestet, die Oberfläche nicht |
+| Finale DATEV-Abnahme durch den Steuerberater | — | inkl. Notations-Prüfpunkt `90`/`80` vs. `9`/`8`, siehe BER-143 |
 
 ## Backlog (Linear)
 
