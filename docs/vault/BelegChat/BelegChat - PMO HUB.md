@@ -292,6 +292,43 @@ Siehe auch [[Research/Post-Alpha-Roadmap]].
 > 12.07. Ein Zähler, der eine Liste beschreibt, veraltet still. Deshalb steht die Liste
 > jetzt daneben.
 
+## Erledigt 2026-08-08 (Interaktive E2E hinter dem Passkey-Login)
+
+Seit dem Baulauf am 23.07. offen: die DB-Semantik war über Trigger-Tests abgesichert, die
+Oberfläche dahinter nie interaktiv geprüft. Nachgeholt am 08.08. gegen einen lokalen
+Dev-Server, der auf die **Produktionsdatenbank** zeigt — deshalb strikt lesend.
+
+**Zugang ohne WebAuthn-Zeremonie:** Die Session ist ein HS256-JWT mit `AUTH_SESSION_SECRET`
+(`src/lib/session.ts`). Für den Lauf wurde ein gültiges Token mit derselben Signatur-Logik
+erzeugt und als Cookie gesetzt. Das prüft alles **hinter** dem Login, ohne einen Authenticator
+zu brauchen. Die Zeremonie selbst ist davon unberührt — sie ist am 12.07. manuell bestanden.
+
+| # | Prüfung | Ergebnis |
+|---|---|---|
+| T1 | `/belege` ohne Session | Redirect auf `/login` — Middleware greift |
+| T2 | Session Firma 99 → Liste | „Testfirma BelegChat · 0 Belege" bei 130 Belegen in der DB — RLS greift |
+| T3 | Fremder Beleg per direkter ID (Seite) | **404**, kein Leak |
+| T4 | `POST /freigeben` auf fremden Beleg, vollständiger Payload | **404 „Beleg nicht gefunden"** — nicht 409 „bereits exportiert". Die RLS wirkt in der Route selbst |
+| T5 | **Signal-Test**: verfälschte JWT-Signatur | abgewiesen (Redirect); gültiges Token 200 — die Prüfung hat Zähne |
+| T6 | Session Firma 01 → Liste | 130 Belege, Statusverteilung stimmig (38 + 26 + 1 = 65 zur Freigabe) |
+| T7 | Detailseite eines exportierten Belegs | rendert, Audit-Log-Abschnitt vorhanden, **kein** Freigabe-Button (festgeschrieben) |
+| T8 | Original-Download (BER-131) | echtes PDF, 1,3 MB, `Original_01-2024-0001.pdf` |
+| T9 | Freigabe-Formular (Auswärts-Beleg) | alle Felder aus BER-107/109/110/116/117 vorhanden; `buSchluessel` = genau `90`/`80`; Sachkonten enthalten **6805**, **6520 fehlt** (31.07. deaktiviert); Button gesperrt: „Zahlungsweg wählen, um freizugeben" |
+| T10 | Audit-Log auf der Detailseite | Abschnitt rendert, Aktionen erkennbar |
+| T11 | Export-Seite (BER-115) | Jahresauswahl **2026 / 2025 / 2024** aus den Belegdaten, Zeitraum monat/quartal/jahr |
+
+**Read-only nachgewiesen:** nach dem Lauf 0 geänderte Belege, 0 neue Audit-Einträge, 0 neue
+Exporte (Fenster 2 h). Serverlog ohne Fehler; die Konsolen-404/405/422 sind exakt die eigenen
+Negativ-Tests. Session-Token danach gelöscht.
+
+> [!warning] Zwei Reste bleiben offen
+> **Freigabe absenden** und **Export erzeugen** wurden bewusst nicht ausgeführt — beide
+> schreiben auf Produktion und sind unter GoBD nicht rücknehmbar (Freigabe schreibt fest,
+> Export erzeugt eine Fassung mit Inhalts-Hash). Machbar wäre das am Test-Mandanten Firma 99
+> mit einem synthetischen Beleg; der bliebe dort dauerhaft stehen.
+> **Die WebAuthn-Zeremonie** (Registrierung/Login) ist nicht Teil dieses Laufs — sie braucht
+> einen echten Authenticator und wurde am 12.07. manuell bestätigt.
+
 ## Offene Punkte (Stand 08.08.2026)
 
 Zusammengezogen aus den Abschnitten oben — Wahrheit bleibt Linear.
@@ -306,7 +343,7 @@ Zusammengezogen aus den Abschnitten oben — Wahrheit bleibt Linear.
 | Ausbaustufe Mandantenfähigkeit & Abo | BER-132..139 | Backlog vom 07.08. |
 | **Threema-Gateway-Secret rotieren** | BER-127 | Projekt *n8n und Infrastruktur* — **Betreiber-Sache** |
 | Supabase-Advisor-Altbefunde | *(kein Issue)* | 3 `SECURITY DEFINER`-Views auf **ERROR**-Level, 3 RPC-exponierte Alt-Funktionen, `pg_trgm` in `public` — am 08.08. aufgefallen |
-| Interaktive E2E hinter dem Passkey-Login | *(kein Issue)* | seit dem Baulauf 23.07. offen — DB-Semantik ist getestet, die Oberfläche nicht |
+| Interaktive E2E hinter dem Passkey-Login | *(kein Issue)* | **am 08.08. nachgeholt** — 11 Prüfungen grün, read-only gegen Produktion. Zwei Reste: Freigabe absenden und Export erzeugen (beides irreversibel) |
 | Finale DATEV-Abnahme durch den Steuerberater | — | inkl. Notations-Prüfpunkt `90`/`80` vs. `9`/`8`, siehe BER-143 |
 
 ## Backlog (Linear)

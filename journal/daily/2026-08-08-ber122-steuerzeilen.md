@@ -80,8 +80,48 @@ Dasselbe nach dem `REVOKE EXECUTE`: dass die Trigger danach noch feuern, war ein
 Annahme (Trigger laufen im Kontext des Tabellen-Eigentümers) — belegt war sie erst durch einen
 zweiten Signal-Test. Bei Rechteänderungen an Trigger-Funktionen ist Plausibilität zu wenig.
 
+## Nachtrag: die interaktive E2E hinter dem Passkey-Login
+
+Beim Nachtragen der Vault-Lücke fiel auf, dass dieser Punkt seit dem Baulauf am 23.07. offen
+stand — die DB-Semantik war über Trigger-Tests abgesichert, die Oberfläche dahinter nie
+geprüft. Nachgeholt am selben Tag.
+
+**Der Trick, der es möglich macht:** Die Session ist ein schlichtes HS256-JWT mit
+`AUTH_SESSION_SECRET`. Ein gültiges Token lässt sich mit derselben Signatur-Logik erzeugen und
+als Cookie setzen — damit ist alles hinter dem Login prüfbar, ohne einen WebAuthn-Authenticator
+zu brauchen. Die Zeremonie selbst bleibt außen vor; sie ist am 12.07. manuell bestanden. Wichtig
+ist die Unterscheidung: „E2E hinter dem Login" und „Passkey-Ceremony" sind zwei verschiedene
+Dinge, und nur das erste war offen.
+
+11 Prüfungen, alle grün. Die drei, die etwas wert sind:
+
+- **Der Freigabe-Versuch auf einen fremden Beleg antwortet 404, nicht 409.** Hätte die Route
+  mit „Beleg ist bereits exportiert" geantwortet, wäre der fremde Datensatz sichtbar gewesen —
+  ein Leak. Das 404 beweist, dass die RLS in der Route selbst greift, nicht erst im Trigger.
+- **Der Signal-Test.** Dass mein selbstgebautes Token funktioniert, beweist noch nicht, dass die
+  Prüfung greift — es könnte auch sein, dass gar nicht geprüft wird. Erst die verfälschte
+  Signatur, die abgewiesen wird, zeigt den Unterschied. Gleiche Lehre wie bei den Triggern
+  heute Vormittag.
+- **Das Freigabe-Formular trägt sichtbar alles, was seit dem 19.07. gebaut wurde:**
+  Termin-Kontext, Zahlungsweg mit drei Gegenkonten, Steuerschlüssel `90`/`80` aus
+  `steuerschluessel`, StB-Vermerk. Und: Konto **6520 fehlt** in der Auswahl — die Sperre vom
+  31.07. ist in der Oberfläche angekommen, nicht nur in der DB.
+
+Ein Zwischenbefund, der keiner war: die Freigabe-Route antwortet auf einen unvollständigen
+Payload mit 422 „Zahlungsweg ist Pflicht", **bevor** sie die Zugehörigkeit prüft. Das sah kurz
+nach falscher Reihenfolge aus. Ein Blick in den Code zeigt: jeder DB-Zugriff läuft in
+`withMandant(...)`, die Zugehörigkeitsprüfung ist die erste Anweisung darin, und sie läuft vor
+jeder Mutation. Die Payload-Validierung vorzuziehen ist sogar günstig — sie antwortet für jede
+ID gleich und verrät damit nicht, ob ein Beleg existiert.
+
+**Was ich bewusst nicht getan habe:** Freigabe absenden und Export erzeugen. Beides schreibt auf
+Produktion und ist unter GoBD nicht rücknehmbar. Nachweis, dass nichts passiert ist: 0 geänderte
+Belege, 0 neue Audit-Einträge, 0 neue Exporte.
+
 ## Offen
 
+- **Freigabe und Export interaktiv prüfen** — ginge am Test-Mandanten Firma 99 mit einem
+  synthetischen Beleg, der dort dauerhaft stehenbliebe. Nicht ohne Entscheidung gemacht.
 - **BER-140 ist startklar** — Blockade aufgelöst, Tabelle steht und ist leer.
 - **Altbefunde des Security-Advisors**, nicht von BER-122 verursacht: drei `SECURITY DEFINER`-Views
   auf **ERROR**-Level (`v_inbox`, `v_monatsübersicht`, `v_export_bereit`), drei RPC-exponierte
