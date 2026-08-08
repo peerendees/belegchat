@@ -321,13 +321,33 @@ zu brauchen. Die Zeremonie selbst ist davon unberührt — sie ist am 12.07. man
 Exporte (Fenster 2 h). Serverlog ohne Fehler; die Konsolen-404/405/422 sind exakt die eigenen
 Negativ-Tests. Session-Token danach gelöscht.
 
-> [!warning] Zwei Reste bleiben offen
-> **Freigabe absenden** und **Export erzeugen** wurden bewusst nicht ausgeführt — beide
-> schreiben auf Produktion und sind unter GoBD nicht rücknehmbar (Freigabe schreibt fest,
-> Export erzeugt eine Fassung mit Inhalts-Hash). Machbar wäre das am Test-Mandanten Firma 99
-> mit einem synthetischen Beleg; der bliebe dort dauerhaft stehen.
-> **Die WebAuthn-Zeremonie** (Registrierung/Login) ist nicht Teil dieses Laufs — sie braucht
-> einen echten Authenticator und wurde am 12.07. manuell bestätigt.
+### Zweiter Teil: Freigabe und Export am Test-Mandanten (Firma 99)
+
+Die schreibenden Schritte danach nachgeholt — am **Test-Mandanten Firma 99**, nie an Firma 01.
+Dafür ein synthetischer Beleg `99-2026-0001` (119,00 € brutto / 100,00 € netto / 19 %,
+Sachkonto 6890, `dokument_fehlt = true`). Er bleibt dauerhaft stehen: nach der Freigabe greift
+die Festschreibung.
+
+| # | Prüfung | Ergebnis |
+|---|---|---|
+| T12 | Freigabe über das Formular | `vorschlag` → `geprueft`; **Gegenkonto 1800** aus dem Zahlungsweg (BER-116), **BU-Schlüssel 90** aus dem 19-%-Mapping (BER-117), beide automatisch. Audit-Kette vollständig: `steuerschluessel_gesetzt, zahlungsweg_gesetzt, status_change, beleg_freigegeben, dokumentation_bestaetigt` |
+| T13 | Festschreibung am frisch freigegebenen Beleg | UPDATE **und** DELETE blockiert, Betrag unverändert |
+| T14 | DATEV-Export erzeugen | EXTF-Datei mit einer Datenzeile: `119,00;"S";"EUR";…;6890;1800;90;0808;"99-2026-0001"` — Konto, Gegenkonto, **BU-Schlüssel in Spalte 9**, Belegdatum TTMM und Belegfeld 1 alle korrekt. Zusatzinformation `"Beleg" / "fehlt bei Übergabe"` (BER-118). Encoding `windows-1252`, Datei `EXTF_Buchungsstapel_2026_M08.csv` |
+| T15 | Export-Fassung in der DB | Version 1, Wurzel, 1 Beleg, 3174 Bytes; **`inhalts_hash` == `sha256(datei_inhalt)`**; Beleg auf `exportiert` mit `export_datum` und `datev_export_id` |
+| T16 | Zweiter Export desselben Zeitraums | **404 „Keine freigegebenen Belege im Zeitraum"** — kein Doppelexport |
+| T17 | Re-Download der Fassung | zweimal byte-identisch; **SHA-256 des Downloads == `inhalts_hash` in der DB** |
+
+> [!success] Die Integritätskette von BER-121 ist end-to-end belegt
+> Was ausgeliefert wird, ist nachweislich dasselbe, was in der Datenbank eingefroren und
+> gehasht wurde — geprüft, nicht angenommen.
+
+**Firma 01 unberührt:** 130 Belege, 65 offen, 0 Änderungen, 0 neue Exporte im Zeitfenster.
+
+> [!warning] Was auch jetzt nicht geprüft ist
+> **Die WebAuthn-Zeremonie** (Registrierung/Login) braucht einen echten Authenticator und ist
+> nicht Teil dieser Läufe — sie wurde am 12.07. manuell bestätigt.
+> **Die Berater-/Mandantennummer der Testfirma ist NULL**, der Header trägt deshalb `0;0`.
+> Für Firma 01 sind die echten Nummern weiterhin offen (Punkt seit 12.07.).
 
 ## Offene Punkte (Stand 08.08.2026)
 
@@ -343,7 +363,8 @@ Zusammengezogen aus den Abschnitten oben — Wahrheit bleibt Linear.
 | Ausbaustufe Mandantenfähigkeit & Abo | BER-132..139 | Backlog vom 07.08. |
 | **Threema-Gateway-Secret rotieren** | BER-127 | Projekt *n8n und Infrastruktur* — **Betreiber-Sache** |
 | Supabase-Advisor-Altbefunde | *(kein Issue)* | 3 `SECURITY DEFINER`-Views auf **ERROR**-Level, 3 RPC-exponierte Alt-Funktionen, `pg_trgm` in `public` — am 08.08. aufgefallen |
-| Interaktive E2E hinter dem Passkey-Login | *(kein Issue)* | **am 08.08. nachgeholt** — 11 Prüfungen grün, read-only gegen Produktion. Zwei Reste: Freigabe absenden und Export erzeugen (beides irreversibel) |
+| ~~Interaktive E2E hinter dem Passkey-Login~~ | *(kein Issue)* | **am 08.08. abgeschlossen** — 17 Prüfungen grün: lesend gegen Firma 01, schreibend (Freigabe + Export) am Test-Mandanten Firma 99. Nicht enthalten: die WebAuthn-Zeremonie selbst |
+| Belegnummer-Format ist nirgends erzwungen | *(kein Issue)* | `naechste_beleg_nr` liefert **`json`**; wer das `->> 'beleg_nr'` vergisst, schreibt `{"beleg_nr":"…"}` als Belegnummer — `belege.beleg_nr` hat keinen Format-CHECK, und die Nummer landet als Belegfeld 1 im Buchungsstapel. Beim E2E am 08.08. selbst hineingelaufen |
 | Finale DATEV-Abnahme durch den Steuerberater | — | inkl. Notations-Prüfpunkt `90`/`80` vs. `9`/`8`, siehe BER-143 |
 
 ## Backlog (Linear)

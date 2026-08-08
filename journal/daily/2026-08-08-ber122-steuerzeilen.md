@@ -114,14 +114,51 @@ nach falscher Reihenfolge aus. Ein Blick in den Code zeigt: jeder DB-Zugriff lä
 jeder Mutation. Die Payload-Validierung vorzuziehen ist sogar günstig — sie antwortet für jede
 ID gleich und verrät damit nicht, ob ein Beleg existiert.
 
-**Was ich bewusst nicht getan habe:** Freigabe absenden und Export erzeugen. Beides schreibt auf
-Produktion und ist unter GoBD nicht rücknehmbar. Nachweis, dass nichts passiert ist: 0 geänderte
-Belege, 0 neue Audit-Einträge, 0 neue Exporte.
+**Zunächst nicht getan:** Freigabe absenden und Export erzeugen. Beides schreibt auf Produktion
+und ist unter GoBD nicht rücknehmbar. Nachweis für den lesenden Teil: 0 geänderte Belege, 0 neue
+Audit-Einträge, 0 neue Exporte.
+
+### Nachgeholt am Test-Mandanten (Firma 99)
+
+Synthetischer Beleg `99-2026-0001` (119,00 € / 19 %, Sachkonto 6890, `dokument_fehlt`), dann
+die volle Kette durch die Oberfläche. Sechs weitere Prüfungen, alle grün.
+
+Was die Freigabe **von selbst** richtig gemacht hat, ohne dass ich es eingegeben hätte:
+Gegenkonto `1800` aus dem gewählten Zahlungsweg (BER-116) und BU-Schlüssel `90` aus dem
+19-%-Mapping in `steuerschluessel` (BER-117). Der Steuerschlüssel war im Formular sogar schon
+vorbelegt. Die Audit-Kette ist vollständig — fünf Einträge von `steuerschluessel_gesetzt` bis
+`dokumentation_bestaetigt`.
+
+Der Export erzeugte genau eine Datenzeile, und die stimmt Feld für Feld:
+
+```
+119,00;"S";"EUR";;;;6890;1800;90;0808;"99-2026-0001";;;"E2E-TEST …";…;"Beleg";"fehlt bei Übergabe"
+```
+
+Konto, Gegenkonto, BU-Schlüssel in Spalte 9, Belegdatum als TTMM, Belegfeld 1 — und hinten die
+Zusatzinformation aus BER-118. Danach: Doppel-Export wird mit 404 abgelehnt, Re-Download ist
+byte-identisch, und **der SHA-256 der ausgelieferten Datei ist derselbe wie der `inhalts_hash`
+in der Datenbank**. Damit ist die Integritätskette aus BER-121 nicht mehr nur konstruiert,
+sondern gemessen.
+
+Firma 01 blieb unberührt: 130 Belege, 65 offen, 0 Änderungen.
+
+### Ein Befund, in den ich selbst hineingelaufen bin
+
+Beim Anlegen des Testbelegs rief ich `naechste_beleg_nr(...)` direkt im INSERT auf. Die Funktion
+liefert aber **`json`**, nicht `text` — die Belegnummer landete als `{"beleg_nr" : "99-2026-0001"}`
+in der Spalte. Die App macht es richtig (`(nr[0].r as {beleg_nr}).beleg_nr`), mein SQL nicht.
+
+Das ist mehr als mein Fehler: `belege.beleg_nr` hat **keinen Format-CHECK**. Ein Aufrufer, der
+das `->> 'beleg_nr'` vergisst, schreibt still einen JSON-Blob als Belegnummer — und die wandert
+als **Belegfeld 1** in den Buchungsstapel, über das DATEV die Sätze gruppiert. Beim Testbeleg
+war es korrigierbar, weil er noch offen war; nach der Freigabe wäre es festgeschrieben gewesen.
+Als offener Punkt im HUB vermerkt.
 
 ## Offen
 
-- **Freigabe und Export interaktiv prüfen** — ginge am Test-Mandanten Firma 99 mit einem
-  synthetischen Beleg, der dort dauerhaft stehenbliebe. Nicht ohne Entscheidung gemacht.
+- **Format-CHECK auf `belege.beleg_nr`** bzw. `naechste_beleg_nr` auf `text` umstellen — siehe
+  Befund oben. Eine kaputte Belegnummer wird heute nirgends abgefangen.
 - **BER-140 ist startklar** — Blockade aufgelöst, Tabelle steht und ist leer.
 - **Altbefunde des Security-Advisors**, nicht von BER-122 verursacht: drei `SECURITY DEFINER`-Views
   auf **ERROR**-Level (`v_inbox`, `v_monatsübersicht`, `v_export_bereit`), drei RPC-exponierte
