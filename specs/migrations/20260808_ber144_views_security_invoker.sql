@@ -1,0 +1,55 @@
+-- ============================================================================
+-- BER-144 Block A: Mandantentrennung fuer die drei Auswertungs-Views
+--
+-- BEFUND (Advisor-Lint 0010 security_definer_view, Level ERROR)
+-- Views laufen in Postgres per Default mit den Rechten ihres Eigentuemers.
+-- v_inbox, v_monatsuebersicht und v_export_bereit gehoeren postgres und
+-- enthalten selbst KEINEN mandant_id-Filter. Damit umgehen sie die RLS von
+-- public.belege vollstaendig.
+--
+-- Am 08.08.2026 per REST verifiziert — mit dem im Frontend ausgelieferten
+-- Publishable-Key, ohne jeden Login:
+--   GET /rest/v1/v_inbox            -> 65 Zeilen
+--   GET /rest/v1/v_monatsuebersicht -> 27 Zeilen
+--   GET /rest/v1/v_export_bereit    ->  5 Zeilen
+--   GET /rest/v1/belege             ->  0 Zeilen  (RLS greift korrekt)
+-- Betroffen: 131 Belege ueber zwei Mandanten, davon einer produktiv.
+-- Die Belegbilder selbst waren nie exponiert — alle Buckets sind privat.
+--
+-- FIX
+-- security_invoker = on schaltet die Views auf die Rechte des Abfragenden um.
+-- Danach greift die RLS von public.belege auch durch die View hindurch.
+--
+-- BEWUSST KEIN DROP/RECREATE: das kippt Grants und abhaengige Objekte still
+-- mit. ALTER VIEW ... SET aendert ausschliesslich die Option.
+--
+-- WIRKUNG NACH DEM UMSCHALTEN
+--   anon / authenticated  -> 0 Zeilen. public.belege hat fuer diese Rollen
+--                            keine SELECT-Policy; die einzige ist
+--                            dash_belege_select fuer dashboard_service.
+--   service_role          -> unveraendert alle Zeilen (BYPASSRLS).
+--   dashboard_service     -> unveraendert. Die Rolle hat auf keine der drei
+--                            Views SELECT-Recht und konnte sie noch nie lesen.
+--
+-- KEIN FRONTEND-RISIKO: keine Code-Aufrufstelle im Repo (belegchat,
+-- threema-decrypt, n8n-workflows durchsucht, auch URL-encodiert). Die Views
+-- sind toter Alpha-Bestand.
+--
+-- UMLAUT: Der View-Name traegt im Katalog ein praekomponiertes u-Umlaut-Zeichen
+-- (U+00FC, NFC, Byte-Folge c3bc) — 17 Zeichen, 18 Bytes. Der Name MUSS als
+-- quoted identifier geschrieben werden. Eine ASCII-Transliteration wuerde eine
+-- zweite View anlegen statt die bestehende zu aendern; die zerlegte Form NFD
+-- (u + combining diaeresis, 75cc88) wuerde das Objekt gar nicht finden.
+-- Vor dem Apply gegen den Katalog verifiziert.
+--
+-- HINWEIS: Die drei Views stehen in keiner Migration — weder hier im Repo noch
+-- in supabase_migrations.schema_migrations. Sie wurden manuell angelegt und
+-- sind unversioniert. Diese Migration aendert sie, versioniert sie aber nicht
+-- nachtraeglich; das ist als eigener Punkt in BER-144 vermerkt.
+--
+-- ROLLBACK: ALTER VIEW ... SET (security_invoker = off);
+-- ============================================================================
+
+ALTER VIEW public.v_inbox            SET (security_invoker = on);
+ALTER VIEW public."v_monatsübersicht" SET (security_invoker = on);
+ALTER VIEW public.v_export_bereit    SET (security_invoker = on);

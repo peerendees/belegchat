@@ -98,7 +98,29 @@ Beide neuen Skripte wurden deshalb gegen bekannt-schlechte Eingaben gefahren:
 | Prüfer | Positiv | Negativ |
 |---|---|---|
 | `schrader_check.py` | echter BER-140-Block → **Exit 0**, alle vier Bestandteile mit Zeichenzahl | `--self-test` grün; `specs/BER-122.md` (Block liegt im Issue, nicht in der Spec) → **Exit 1** mit korrekter Checkliste |
-| `doc-drift-check.sh` | Repo im Ist-Zustand → **PASS**, 51 registrierte Artefakte | eingeschleuste unregistrierte Datei → gemeldet; eingeschleuste tote Referenz → gemeldet |
+| `doc-drift-check.sh` | Repo im Ist-Zustand → **PASS**, 56 registrierte Artefakte | eingeschleuste unregistrierte Datei → gemeldet; eingeschleuste tote Referenz → gemeldet |
+
+### Semgrep-Gates: der eigentliche Beweis
+
+Ein grüner Check nach dem Umschalten beweist nichts — vorher war er ja auch
+grün. Deshalb wurde ein **Kanarienvogel** durch beide Layer geschickt: eine
+Datei mit `exec("ls " + userInput)`, die Semgrep als *Blocking* meldet
+(`javascript.lang.security.detect-child-process`).
+
+| Layer | Erwartung | Ergebnis |
+|---|---|---|
+| 2 — `.githooks/pre-commit` | Commit wird verweigert | **BLOCKED: Semgrep-Findings** — Commit kam nicht zustande |
+| 3 — CI (`--no-verify` erzwungen) | PR wird rot | **Semgrep Security Scan: fail** (Commit `3c46208`) |
+
+Vor dem Umschalten wäre exakt dieser Commit grün durchgelaufen. Der Kanarienvogel
+wurde direkt danach entfernt (Commit `93ae2e0`); beide Commits bleiben in der
+PR-Historie als Beleg stehen.
+
+Nebenbefund dabei: Es existiert ein **zweiter, unabhängiger Check namens
+„Semgrep OSS"** (GitHub-App, nicht dieser Workflow). Er wurde vom Kanarienvogel
+ebenfalls rot — im Repo ist also nicht nur eine Semgrep-Instanz unterwegs. Wer
+Regeln ändert, sollte wissen, dass diese zweite Quelle existiert und nicht aus
+`.semgrep.yml` gespeist wird.
 
 ---
 
