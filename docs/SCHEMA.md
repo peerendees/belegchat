@@ -112,8 +112,15 @@ DELETE, sobald der Beleg `geprueft`/`exportiert` ist — strenger als
 `dashboard_service`, Mandant ausschließlich über den Join auf `belege`
 (kein Selbstbezug — 42P17).
 
-Stand: nur Datenmodell. App, DATEV-Export (`belegRow → belegRows`) und n8n
-schreiben noch keine Zeilen — bis dahin ist das Systemverhalten unverändert.
+Die beiden Trigger-Funktionen sind `SECURITY DEFINER`; `EXECUTE` ist für
+`anon`/`authenticated` entzogen, damit sie nicht als REST-RPC auf der
+öffentlichen API-Oberfläche stehen (Advisor-Lints 0028/0029, Nachtrags-Migration
+`20260808191128`). Trigger laufen im Kontext des Tabellen-Eigentümers und
+brauchen kein EXECUTE-Recht der aufrufenden Rolle.
+
+Stand: **angewendet am 08.08.2026** (Version `20260808190814`), Tabelle leer.
+App, DATEV-Export (`belegRow → belegRows`) und n8n schreiben noch keine Zeilen —
+bis dahin ist das Systemverhalten unverändert.
 
 ## mandanten · firmen · kunden
 

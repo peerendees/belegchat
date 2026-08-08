@@ -81,6 +81,7 @@
 | `specs/migrations/20260801_korrektur_termin_ort_0035.sql` | Protokoll der Einmal-Korrektur `termin_ort` an 01-2026-0035 vor dem ersten Auswärts-Export (BER-126, Verfahrensdoku Ä-7) |
 | `specs/migrations/20260808_beleg_steuerzeilen.sql` | BER-122 Stufe 1: Tabelle `beleg_steuerzeilen` (mehrere MwSt-Sätze pro Beleg) + deferred Konsistenz-Trigger, Festschreibungs-Trigger, RLS |
 | `specs/migrations/20260808_ber122_trigger_tests.sql` | BER-122 Verhaltens-Tests zur Migration (Rollback-Transaktion, Test-Mandant Firma 99) |
+| `specs/migrations/20260808_beleg_steuerzeilen_revoke_rpc.sql` | BER-122 Nachtrag: Trigger-Funktionen aus der REST-API nehmen (REVOKE EXECUTE für anon/authenticated) |
 
 ## Journal
 

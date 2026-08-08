@@ -2,7 +2,7 @@
 -- VERHALTENS-TESTS zu BER-122 Stufe 1 (beleg_steuerzeilen)
 --
 -- Ausführung: NACH apply_migration von
--- threema-decrypt/supabase/migrations/20260808110034_beleg_steuerzeilen.sql,
+-- threema-decrypt/supabase/migrations/20260808190814_beleg_steuerzeilen.sql,
 -- per Supabase-MCP execute_sql als EIN Aufruf. Läuft in einer Transaktion und
 -- endet mit ROLLBACK — hinterlässt keinerlei Daten. Arbeitet ausschließlich mit
 -- synthetischen Zeilen am Test-Mandanten (Threema-ID VDUZ9S7E, Firma 99);
