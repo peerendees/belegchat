@@ -26,6 +26,20 @@
   in einen `SECURITY DEFINER`-Trigger. Wurde bei `beleg_steuerzeilen` von Anfang an so
   gebaut statt erneut hineinzulaufen. **Vorbeugung:** vor jeder neuen RLS-Policy die
   Fix-Migration vom 23.07. als Muster lesen.
+- **2026-08-08 (Verifikation)** — Ein **Supabase-Branch taugt in diesem Projekt nicht**
+  zum Testen von Migrationen: er spielt nur die Migrationshistorie ein, und `belege`
+  wird von keiner Migration angelegt (die Tabelle ist älter als die Historie ab
+  12.03.2026). Dazu kommen keine Daten mit, also fehlt der Test-Mandant. Der tragfähige
+  Weg ist der **Rollback-Dry-Run gegen Produktion** (Migration + Tests als ein
+  `execute_sql`-Aufruf zwischen `BEGIN` und `ROLLBACK`) — echtes Schema, echte
+  Testdaten, kostenlos, nichts bleibt zurück. **Vorbeugung:** vor jedem Branch-Vorschlag
+  prüfen, ob die Baseline überhaupt in der Migrationshistorie steckt.
+- **2026-08-08 (Verifikation)** — Der Supabase-MCP-Zugang darf **kein
+  `SET ROLE dashboard_service`** (42501). RLS-Verhaltenstests über diesen Kanal brechen
+  daran ab und reißen den ganzen Lauf mit. **Vorbeugung:** RLS zweistufig testen —
+  strukturell (RLS aktiv, Policy-Anzahl, kein Selbstbezug in `pg_policies`) läuft immer;
+  den Verhaltensteil in `EXCEPTION WHEN insufficient_privilege` kapseln und über
+  `DASHBOARD_DB_URL` nachholen.
 - **2026-08-08 (Prozess)** — `/implement` lief zunächst gegen einen veralteten
   Issue-Stand: der Backlog-Record wurde parallel zur Session bearbeitet, der erste
   `get_issue`-Lesevorgang lieferte Status und Description von vorher. Ein blindes

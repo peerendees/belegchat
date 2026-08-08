@@ -224,41 +224,81 @@ $tests_kaskade$;
 
 -- ---------------------------------------------------------------------------
 -- T11: RLS — Mandantenisolation über den Join auf belege
---      Geprüft wird als Rolle dashboard_service mit gesetztem app.mandant_id.
+--
+--      T11a–c sind STRUKTURELL und laufen immer: RLS aktiv, vier Policies,
+--      kein Selbstbezug auf die eigene Tabelle (42P17-Regressionsschutz).
+--      T11d ist der VERHALTENS-Test als Rolle dashboard_service. Er braucht
+--      eine Verbindung, die SET ROLE auf dashboard_service darf — der
+--      Supabase-MCP-Zugang darf das NICHT (42501). In dem Fall überspringt der
+--      Test mit NOTICE, statt den ganzen Lauf abzubrechen; der Nachweis ist
+--      dann über eine DASHBOARD_DB_URL-Verbindung nachzuholen.
 -- ---------------------------------------------------------------------------
 DO $tests_rls$
 DECLARE
-  m_id      uuid;
-  fremd_id  uuid := '00000000-0000-0000-0000-0000000000ff';
-  sichtbar  integer;
+  m_id          uuid;
+  fremd_id      uuid := '00000000-0000-0000-0000-0000000000ff';
+  sichtbar      integer;
+  rls_an        boolean;
+  n_policies    integer;
+  n_selbstbezug integer;
 BEGIN
+  -- T11a: RLS ist aktiviert
+  SELECT relrowsecurity INTO rls_an
+    FROM pg_class WHERE oid = 'public.beleg_steuerzeilen'::regclass;
+  IF NOT rls_an THEN
+    RAISE EXCEPTION 'T11a FEHLGESCHLAGEN: RLS ist auf beleg_steuerzeilen nicht aktiviert';
+  END IF;
+
+  -- T11b: vier Policies (SELECT/INSERT/UPDATE/DELETE)
+  SELECT count(*) INTO n_policies
+    FROM pg_policies WHERE schemaname = 'public' AND tablename = 'beleg_steuerzeilen';
+  IF n_policies <> 4 THEN
+    RAISE EXCEPTION 'T11b FEHLGESCHLAGEN: % Policies statt 4 auf beleg_steuerzeilen', n_policies;
+  END IF;
+
+  -- T11c: keine Policy referenziert die eigene Tabelle in einer Subquery (42P17)
+  SELECT count(*) INTO n_selbstbezug
+    FROM pg_policies
+   WHERE schemaname = 'public' AND tablename = 'beleg_steuerzeilen'
+     AND (COALESCE(qual, '')       ~* 'from\s+(public\.)?beleg_steuerzeilen'
+       OR COALESCE(with_check, '') ~* 'from\s+(public\.)?beleg_steuerzeilen');
+  IF n_selbstbezug > 0 THEN
+    RAISE EXCEPTION 'T11c FEHLGESCHLAGEN: % Policy(s) mit Selbstbezug auf beleg_steuerzeilen — 42P17-Rekursionsgefahr', n_selbstbezug;
+  END IF;
+
+  -- T11d: Verhaltens-Test, nur wenn die Verbindung SET ROLE darf
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dashboard_service') THEN
-    RAISE NOTICE 'T11 UEBERSPRUNGEN: Rolle dashboard_service nicht vorhanden';
+    RAISE NOTICE 'T11d UEBERSPRUNGEN: Rolle dashboard_service nicht vorhanden';
     RETURN;
   END IF;
 
   SELECT id INTO m_id FROM public.mandanten
    WHERE threema_id = 'VDUZ9S7E' AND firma_nr = '99';
 
-  -- negativ: fremder Mandant sieht nichts
-  SET LOCAL ROLE dashboard_service;
-  PERFORM set_config('app.mandant_id', fremd_id::text, true);
-  SELECT count(*) INTO sichtbar FROM public.beleg_steuerzeilen;
-  RESET ROLE;
+  BEGIN
+    -- negativ: fremder Mandant sieht nichts
+    SET LOCAL ROLE dashboard_service;
+    PERFORM set_config('app.mandant_id', fremd_id::text, true);
+    SELECT count(*) INTO sichtbar FROM public.beleg_steuerzeilen;
+    RESET ROLE;
 
-  IF sichtbar <> 0 THEN
-    RAISE EXCEPTION 'T11a FEHLGESCHLAGEN: fremder Mandant sieht % Steuerzeilen', sichtbar;
-  END IF;
+    IF sichtbar <> 0 THEN
+      RAISE EXCEPTION 'T11d FEHLGESCHLAGEN: fremder Mandant sieht % Steuerzeilen', sichtbar;
+    END IF;
 
-  -- positiv: eigener Mandant sieht die Testzeilen
-  SET LOCAL ROLE dashboard_service;
-  PERFORM set_config('app.mandant_id', m_id::text, true);
-  SELECT count(*) INTO sichtbar FROM public.beleg_steuerzeilen;
-  RESET ROLE;
+    -- positiv: eigener Mandant sieht die Testzeilen
+    SET LOCAL ROLE dashboard_service;
+    PERFORM set_config('app.mandant_id', m_id::text, true);
+    SELECT count(*) INTO sichtbar FROM public.beleg_steuerzeilen;
+    RESET ROLE;
 
-  IF sichtbar = 0 THEN
-    RAISE EXCEPTION 'T11b FEHLGESCHLAGEN: eigener Mandant sieht keine Steuerzeilen (Policy zu streng)';
-  END IF;
+    IF sichtbar = 0 THEN
+      RAISE EXCEPTION 'T11e FEHLGESCHLAGEN: eigener Mandant sieht keine Steuerzeilen (Policy zu streng)';
+    END IF;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'T11d/e UEBERSPRUNGEN: Verbindungsrolle darf kein SET ROLE dashboard_service (%). Verhaltens-Nachweis ueber DASHBOARD_DB_URL nachholen.', SQLERRM;
+  END;
 END
 $tests_rls$;
 
