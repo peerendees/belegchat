@@ -118,6 +118,11 @@ Siehe `API_INVENTORY.md` fuer externe + interne Schnittstellen.
 | `docs/AUSFUEHRUNGSPLAN-STB-RUECKMELDUNG.md` | Nachtlauf + Morgen-Runbook StB-Rückmeldung |
 | `docs/audits/2026-07-22-validierung-ber-116-119.md` | Validierungsbericht Entwurfs-Specs |
 | `docs/audits/2026-07-23-strukturpruefung-ausbaustufe.md` | Strukturprüfung nächste Ausbaustufe (Teil A) |
+| `docs/audits/2026-08-08-gate-verdrahtung.md` | Audit: welche Quality Gates tatsächlich verdrahtet sind (6 Befunde, davon 2 „Grün ohne Prüfung") |
+| `DEVELOPER_ONBOARDING.md` | Handoff an fremde Teams / andere Werkzeuge: Setup, Pflichtlektüre, Gates, Annahmen |
+| `.claude/scripts/schrader_check.py` | Deterministischer Story-Prompt-Check (Schrader-Bestandteile), mit `--self-test` |
+| `scripts/doc-drift-check.sh` | Doku-Drift gegen §9 + INDEX (tote Referenz / unregistriert / Frische), warn-only |
+| `.claude/model-profile.yml` | Token-Budget-Basis für den Pre-Flight der Skills (geschätzt, nicht gemessen) |
 | `docs/verfahrensdoku/AENDERUNGEN-v1.1.md` | Verfahrensdoku-Ergänzungen v1.1 (entsteht im Nachtlauf) |
 | `specs/migrations/20260723_stb_rueckmeldung_konsolidiert.sql` | Konsolidierte Migration BER-116..119/121 (angewendet Baulauf S1) |
 | `specs/migrations/20260723_trigger_tests.sql` | Trigger-Verhaltenstests (Rollback-Transaktion) |

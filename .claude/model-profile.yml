@@ -1,0 +1,22 @@
+# Modell-Profil — BelegChat
+#
+# Bezugsbasis fuer den Token-Pre-Flight in /implement (Schritt 0b) und die
+# Fan-out-Buchhaltung in Schritt 4b. Bis 08.08.2026 fehlte die Datei; die Skills
+# fielen auf den Cloud-Default zurueck und meldeten das als Warnung
+# (docs/audits/2026-08-08-gate-verdrahtung.md).
+#
+# Budget = served_context * effective_fraction * budget_pct
+#        = 200000 * 1.0 * 0.80 = 160000 Token nutzbar je Fenster
+#
+# Die Werte sind der konservative Cloud-Default. Sie sind NICHT gemessen —
+# wer sie schaerfen will, faehrt eine Endpoint-Probe und traegt das Ergebnis
+# hier ein. Ein geschaetztes Profil ist besser als gar keines, aber es bleibt
+# eine Schaetzung mit Marge, kein Praezisions-Gate.
+
+served_context: 200000      # bedientes Kontextfenster, nicht das Modell-Maximum
+effective_fraction: 1.0     # nutzbarer Anteil davon
+budget_pct: 0.80            # Sprint-Box-Grenze: ab hier Sprint-Ende empfohlen
+capability_factor: 1.0      # skaliert Story-Groesse UND Verifikations-Schleifen
+
+herkunft: default           # "default" | "probe" — hier: nicht gemessen
+gemessen_am: null

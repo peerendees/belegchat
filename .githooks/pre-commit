@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# pre-commit — Quality-Gate Layer 2: ESLint + Semgrep + Dependency-Check
+# pre-commit — Quality-Gate Layer 2: ESLint + Typecheck + Semgrep
 # Installiert via: bash scripts/install-hooks.sh (setzt core.hooksPath=.githooks)
+#
+# Die Semgrep-Packs kommen aus .semgrep.yml — nicht mehr hartkodiert.
+# Frueher stand die Liste hier UND im CI-Workflow UND (auskommentiert) im
+# Manifest; das Manifest las niemand. Befund vom 08.08.2026, siehe
+# docs/audits/2026-08-08-gate-verdrahtung.md.
 
 set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+MANIFEST="${REPO_ROOT}/.semgrep.yml"
 
 echo "=== Pre-Commit Gate (Layer 2) ==="
 
@@ -28,20 +36,31 @@ else
   echo "WARN: npx nicht verfuegbar, Typecheck uebersprungen."
 fi
 
-# 3. Semgrep (wenn installiert)
+# 3. Semgrep — Packs aus dem Manifest
 echo "[3/3] Semgrep..."
-if command -v semgrep &>/dev/null; then
-  PACKS="p/javascript p/typescript p/react p/nextjs p/security-audit p/owasp-top-ten"
+if ! command -v semgrep &>/dev/null; then
+  echo "WARN: Semgrep nicht installiert, SAST uebersprungen."
+  echo "      Installation: brew install semgrep"
+elif [ ! -f "$MANIFEST" ]; then
+  echo "WARN: .semgrep.yml fehlt, SAST uebersprungen."
+else
+  PACKS="$(grep -E '^[[:space:]]*-[[:space:]]+p/' "$MANIFEST" | sed -E 's/^[[:space:]]*-[[:space:]]+//')"
+  if [ -z "$PACKS" ]; then
+    # Kein stilles Durchwinken: ein leeres Manifest ist ein Befund, kein Gruen.
+    echo "BLOCKED: .semgrep.yml enthaelt keine aktiven Packs (Zeilen '  - p/...')."
+    echo "         Entweder Packs eintragen oder das Gate bewusst in CONVENTIONS.md abschalten."
+    exit 1
+  fi
   CONFIG_FLAGS=""
   for pack in $PACKS; do
     CONFIG_FLAGS="$CONFIG_FLAGS --config $pack"
   done
-  semgrep $CONFIG_FLAGS --error --quiet 2>/dev/null || {
+  echo "      Packs: $(echo "$PACKS" | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  semgrep $CONFIG_FLAGS --error --quiet --metrics=off 2>/dev/null || {
     echo "BLOCKED: Semgrep-Findings. Bitte beheben."
     exit 1
   }
-else
-  echo "WARN: Semgrep nicht installiert, SAST uebersprungen."
 fi
 
 echo "=== Pre-Commit Gate: PASS ==="
