@@ -1,9 +1,10 @@
 ---
+type: projekt-hub
 tags: [projekt, belegchat, entwicklung]
 status: aktiv
 phase: post-alpha
 erstellt: 2026-07-10
-aktualisiert: 2026-07-11
+aktualisiert: 2026-08-08
 language: de
 source: claude
 chat_url: unbekannt
@@ -29,6 +30,13 @@ Mandanten senden Belegfotos per Threema; der Workflow extrahiert Daten, schlägt
 | **Beta** | Threema E2E Einzelseite grün (2026-07-10, Beleg `01-2026-0003`) |
 | **Alpha** | **E2E grün** (2026-07-11, Beleg `01-2026-0004`, Mehrseiten + GoBD) |
 | **Post-Alpha** | **Phase 1 GoBD abgeschlossen** (DB + Edge + n8n live, E2E `01-2026-0005`, 2026-07-11) — PRs offen |
+| **Echtbetrieb** | seit 2026-07-15 initialisiert; Stand 2026-08-08: **130 Belege** |
+
+> [!warning] Lücke in dieser Datei: 19.07.–02.08.2026
+> Die Arbeit an BER-116 bis BER-139 (StB-Rückmeldung, Vorsteuer-/Steuerschlüssel,
+> Belegimport-Befehl, n8n-Instandsetzung, Belegdatum-Riegel, Nummernvergabe) ist hier
+> nie nachgetragen worden. Wahrheit dafür sind Linear, `belegchat/journal/daily/` und
+> `docs/audits/`. Der Eintrag vom 08.08. schließt daran an, ohne die Lücke zu füllen.
 
 ## Erledigt 2026-07-10 (Beta)
 
@@ -116,6 +124,36 @@ Folge-Issue zu BER-92: Threema-Rückfrage ~2–6 s früher (direkt nach Integrit
 
 **Post-Alpha-Plan damit vollständig abgearbeitet** — offen nur externe Schritte (StB-Nummern, DATEV-Abnahme, Threema-Foto, Secret-Verifikationen).
 
+## Erledigt 2026-08-08 (BER-122 Stufe 1 — Mehrere MwSt-Sätze)
+
+Restaurant- und Supermarktbelege führen 7 % und 19 % nebeneinander; `belege` trug bisher
+genau einen Satz. Stufe 1 verankert das Datenmodell, **bevor** App und Export darauf
+aufsetzen — die riskanteste Entscheidung zuerst.
+
+- [x] Satellitentabelle `beleg_steuerzeilen` (Satz, Netto, MwSt, generiertes Brutto, BU-Schlüssel je Zeile)
+- [x] **Additiv:** 0 Zeilen = Ein-Satz-Beleg (gesamter Bestand, keine Rückmigration) · ≥ 2 Zeilen = Mehrsatz · genau 1 Zeile verboten
+- [x] Konsistenz-Trigger als **`CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED`** — als Row-Trigger hätte er jeden legalen Mehrsatz-Beleg blockiert
+- [x] **Zweiter** Konsistenz-Trigger auf `belege` — sonst wäre die Ausschlussregel über die Elterntabelle umgehbar
+- [x] Eigener Festschreibungs-Trigger (strenger als `beleg_seiten`: INSERT/UPDATE/DELETE gesperrt); `belege`-Whitelist unberührt
+- [x] RLS + 4 Policies, Mandant über den Join auf `belege`, **ohne** Selbstbezug (42P17-Lehre aus Baulauf S1)
+- [x] Verhaltenstests T1–T12 gegen das angewendete Schema, Rollback, 0 Rückstände — plus **Signal-Test**, weil ein leeres Ergebnis nur Abwesenheit von Rot beweist
+- [x] Angewendet auf Produktion (`20260808190814`); Bestand unverändert: 130 Belege, 0 Steuerzeilen
+- [x] **Nachtrag:** Advisor meldete beide neuen `SECURITY DEFINER`-Funktionen als REST-RPC-aufrufbar für `anon`/`authenticated` → `EXECUTE` entzogen (`20260808191128`), Trigger per Signal-Test weiterhin intakt
+- [x] Folge-Stories BER-140..143 angelegt und verkettet
+
+**Reihenfolge gegenüber der Spec getauscht:** Export **vor** Erfassung. Könnte die Freigabe
+Zeilen schreiben, bevor der Export sie liest, entstünde ein Buchungssatz ohne BU-Schlüssel
+und mit dem vollen Belegbetrag — beim Steuerberater eine falsche Vorsteueraufteilung, nach
+BER-121 nur per Korrekturfassung behebbar.
+
+| Stufe | Issue | Inhalt | Stand |
+|---|---|---|---|
+| 1 | [BER-122](https://linear.app/berent/issue/BER-122) | Datenmodell + Trigger + RLS | **angewendet 08.08.** |
+| 2 | [BER-140](https://linear.app/berent/issue/BER-140) | DATEV-Export `belegRow → belegRows` | **startklar** |
+| 3 | [BER-141](https://linear.app/berent/issue/BER-141) | Steuerzeilen-Editor + Freigabe-Route | offen |
+| 4 | [BER-142](https://linear.app/berent/issue/BER-142) | n8n: KI-Schema `steuerzeilen[]` | offen |
+| 5 | [BER-143](https://linear.app/berent/issue/BER-143) | Abnahme end-to-end, dann v1-Beschränkung entfernen | offen |
+
 ## Post-Alpha (P2)
 
 **Implementierungsplan:** [[Research/POST-ALPHA-Implementierungsplan]] · Claude Code: `belegchat/docs/POST-ALPHA-PLAN.md`
@@ -124,11 +162,11 @@ Siehe auch [[Research/Post-Alpha-Roadmap]].
 
 | Phase | Thema | Linear | Status |
 |-------|-------|--------|--------|
-| 0 | Pfad-Migration Shared → `~/Entwicklung/projekte/` | — | offen |
-| 1 | GoBD: Zeitstempel, Hash, Unveränderbarkeit | BER-92 | **umgesetzt** — n8n-Import + E2E offen |
-| 2 | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | offen |
-| 3 | Dashboard Threema-ID + Passkey | BER-93 *(anlegen)* | offen |
-| 4 | RLS final, DATEV, Landing | BER-91, BER-22 | offen |
+| 0 | Pfad-Migration Shared → `~/Entwicklung/projekte/` | [BER-94](https://linear.app/berent/issue/BER-94) | **erledigt** |
+| 1 | GoBD: Zeitstempel, Hash, Unveränderbarkeit | [BER-92](https://linear.app/berent/issue/BER-92) | **erledigt** |
+| 2 | PDF-Batch CLI + n8n-Webhook | [BER-90](https://linear.app/berent/issue/BER-90) | **erledigt** |
+| 3 | Dashboard Threema-ID + Passkey | [BER-93](https://linear.app/berent/issue/BER-93) | **erledigt** (Passkey-E2E 12.07., deployed) |
+| 4 | DATEV, Landing, RLS final | [BER-91](https://linear.app/berent/issue/BER-91), [BER-22](https://linear.app/berent/issue/BER-22) | DATEV-Export gebaut; finale StB-Abnahme offen |
 
 ## Kanal-Strategie
 

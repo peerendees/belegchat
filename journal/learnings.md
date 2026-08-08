@@ -46,3 +46,26 @@
   Append hat dadurch eine bereits vorhandene Sektion dupliziert. **Vorbeugung:** vor
   schreibenden Backlog-Operationen den Record frisch lesen, nicht auf den Stand vom
   Sessionbeginn verlassen.
+- **2026-08-08 (Anwendung)** — `apply_migration` über den Supabase-MCP registriert die
+  Migration mit einem **eigenen Zeitstempel** (dem Anwendungszeitpunkt), nicht mit dem
+  Dateinamen: Datei `20260808110034`, registriert `20260808190814`. Ein späteres
+  `supabase db push` hätte die Migration als noch nicht angewendet gesehen und erneut
+  ausgeführt. **Vorbeugung:** nach jedem `apply_migration` sofort
+  `supabase_migrations.schema_migrations` lesen und die Datei auf die registrierte
+  Version umbenennen.
+- **2026-08-08 (Anwendung)** — Der **Supabase-Security-Advisor gehört direkt nach jedes
+  `apply_migration`**, nicht in ein späteres Audit. Er meldete sofort, dass beide neuen
+  `SECURITY DEFINER`-Trigger-Funktionen über `/rest/v1/rpc/<name>` für `anon` und
+  `authenticated` aufrufbar waren (Lints 0028/0029) — ein Punkt, den die eigene Security
+  Validation der Story ausdrücklich ausgeschlossen hatte und der beim Schreiben trotzdem
+  durchrutschte. `REVOKE EXECUTE` ist gefahrlos: Trigger laufen im Kontext des
+  Tabellen-Eigentümers. **Vorbeugung:** `get_advisors` als festen Schritt nach dem
+  Anwenden, und bei jeder neuen `SECURITY DEFINER`-Funktion das REVOKE gleich in die
+  Migration schreiben.
+- **2026-08-08 (Verifikation)** — Ein leeres Testergebnis beweist nur die **Abwesenheit
+  von Rot**, nicht die Funktion der Prüfmaschinerie. Der Testlauf lieferte `[]` — erst
+  ein absichtlich fehlschlagender Lauf zeigte, dass die Exception den Aufrufer überhaupt
+  erreicht. Dasselbe nach dem `REVOKE`: dass die Trigger noch feuern, war eine Annahme,
+  bis der Signal-Test sie belegt hat. **Vorbeugung:** nach jedem grünen Lauf und nach
+  jeder Rechteänderung an Trigger-Funktionen einen Signal-Test fahren, der scheitern
+  MUSS.
