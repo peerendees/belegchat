@@ -36,7 +36,9 @@
   "tools_available": {
     "eslint": true,
     "typescript": true,
-    "semgrep": false,
+    "semgrep": true,
+    "tests": false,
+    "coverage": false,
     "sonarqube_cloud": false,
     "gitleaks": false,
     "trivy": false

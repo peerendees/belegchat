@@ -1,12 +1,26 @@
 # Semgrep-Manifest — BelegChat
-# Layer 2 (Pre-Commit) + Layer 3 (CI) lesen dieses Manifest.
+#
+# EINZIGE Quelle der aktiven Packs. Gelesen von:
+#   - Layer 2: .githooks/pre-commit
+#   - Layer 3: .github/workflows/semgrep.yml
+#
+# Beide lesen die Zeilen unter `packs:` per
+#   grep -E '^[[:space:]]*-[[:space:]]+p/'
+# und bauen daraus die --config-Flags. Wer hier etwas aendert, aendert damit
+# beide Layer — genau das war vorher NICHT so: die Liste stand auskommentiert
+# hier und zusaetzlich hartkodiert im Hook und im Workflow (Stand 08.08.2026,
+# docs/audits/2026-08-08-gate-verdrahtung.md).
+#
+# Eine Zeile pro Pack, Format `  - p/<name>`. Auskommentierte Zeilen sind
+# inaktiv — ein leeres Manifest schaltet den SAST-Gate ab, nicht durch.
 
+packs:
+  - p/javascript
+  - p/typescript
+  - p/react
+  - p/nextjs
+  - p/security-audit
+  - p/owasp-top-ten
+
+# Projekteigene Regeln (derzeit keine — die Packs decken den Bedarf).
 rules: []
-
-# Aktive Packs (von Pre-Commit + CI gelesen):
-# p/javascript
-# p/typescript
-# p/react
-# p/nextjs
-# p/security-audit
-# p/owasp-top-ten

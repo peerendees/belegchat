@@ -81,6 +81,12 @@
 | `specs/migrations/20260801_korrektur_termin_ort_0035.sql` | Protokoll der Einmal-Korrektur `termin_ort` an 01-2026-0035 vor dem ersten Auswärts-Export (BER-126, Verfahrensdoku Ä-7) |
 | `specs/migrations/20260808_beleg_steuerzeilen.sql` | BER-122 Stufe 1: Tabelle `beleg_steuerzeilen` (mehrere MwSt-Sätze pro Beleg) + deferred Konsistenz-Trigger, Festschreibungs-Trigger, RLS |
 | `specs/migrations/20260808_ber122_trigger_tests.sql` | BER-122 Verhaltens-Tests zur Migration (Rollback-Transaktion, Test-Mandant Firma 99) |
+| `specs/migrations/20260808_beleg_steuerzeilen_revoke_rpc.sql` | BER-122 Nachtrag: Trigger-Funktionen aus der REST-API nehmen |
+| `docs/audits/2026-08-08-gate-verdrahtung.md` | Audit der Gate-Verdrahtung: 6 Befunde, u. a. CI-Semgrep als nicht-fehlschlagbarer Check |
+| `DEVELOPER_ONBOARDING.md` | Übergabe an fremde Teams oder andere Werkzeuge |
+| `.claude/scripts/schrader_check.py` | Story-Prompt-Vollständigkeit, deterministisch |
+| `scripts/doc-drift-check.sh` | Doku-Drift-Prüfer gegen die SSoT-Tabellen |
+| `.claude/model-profile.yml` | Token-Budget-Basis der Skills |
 | `specs/migrations/20260808_beleg_steuerzeilen_revoke_rpc.sql` | BER-122 Nachtrag: Trigger-Funktionen aus der REST-API nehmen (REVOKE EXECUTE für anon/authenticated) |
 
 ## Journal

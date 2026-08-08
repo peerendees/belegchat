@@ -1,5 +1,11 @@
 name: Semgrep SAST
 
+# Layer 3. Die Packs kommen aus .semgrep.yml — nicht mehr hartkodiert.
+# Seit 08.08.2026 blockierend: `continue-on-error` am Scan-Schritt ist weg.
+# Vorher war dieser Check ein Gruen, das nie rot werden konnte
+# (docs/audits/2026-08-08-gate-verdrahtung.md). Baseline beim Umschalten:
+# 0 Findings ueber 422 Dateien.
+
 on:
   push:
     branches: [main]
@@ -14,20 +20,37 @@ jobs:
       image: semgrep/semgrep
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Packs aus .semgrep.yml lesen
+        id: packs
+        run: |
+          if [ ! -f .semgrep.yml ]; then
+            echo "::error::.semgrep.yml fehlt — SAST-Manifest ist Pflicht."
+            exit 1
+          fi
+          PACKS="$(grep -E '^[[:space:]]*-[[:space:]]+p/' .semgrep.yml | sed -E 's/^[[:space:]]*-[[:space:]]+//')"
+          if [ -z "$PACKS" ]; then
+            # 0 Packs ist ein Befund, kein Gruen: sonst meldet der Check "pass",
+            # obwohl nichts geprueft wurde.
+            echo "::error::.semgrep.yml enthaelt keine aktiven Packs (Zeilen '  - p/...')."
+            exit 1
+          fi
+          FLAGS=""
+          for p in $PACKS; do FLAGS="$FLAGS --config $p"; done
+          echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
+          echo "Aktive Packs: $(echo "$PACKS" | tr '\n' ' ')"
+
       - name: Run Semgrep
         run: |
-          semgrep \
-            --config p/javascript \
-            --config p/typescript \
-            --config p/react \
-            --config p/nextjs \
-            --config p/security-audit \
-            --config p/owasp-top-ten \
+          semgrep ${{ steps.packs.outputs.flags }} \
             --error \
+            --metrics=off \
             --sarif \
             --output semgrep-results.sarif
-        continue-on-error: true
+
       - name: Upload SARIF
+        # Nur der Upload darf scheitern, ohne den Lauf zu kippen — der Scan nicht.
+        if: always()
         uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
         with:
           sarif_file: semgrep-results.sarif
