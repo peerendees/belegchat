@@ -86,6 +86,35 @@ Beleg (BER-118) erzwingt der BEFORE-INSERT-Trigger `fn_beleg_seiten_insert_guard
 — die frühere, in der Policy verschachtelte Selbstreferenz auf `beleg_seiten`
 verursachte `42P17`-Rekursion (Fix-Migration 23.07., im Baulauf S1 gefunden).
 
+## beleg_steuerzeilen (BER-122 Stufe 1)
+
+`id uuid PK · beleg_id FK belege ON DELETE CASCADE · pos smallint (>0, UNIQUE je
+Beleg) · mwst_satz numeric(5,2) · betrag_netto · mwst_betrag · betrag_brutto
+(GENERATED = netto + mwst) · bu_schluessel varchar(4) (Format wie belege) ·
+created_at`.
+
+Semantik: **0 Zeilen = Ein-Satz-Beleg** (Regelfall, gesamter Bestand — es gibt
+keine Rückmigration); **≥ 2 Zeilen = Mehrsatz-Beleg**, dann sind die Zeilen die
+Wahrheit und `belege.mwst_satz`/`belege.bu_schluessel` sind NULL; **genau 1 Zeile
+ist verboten**. Die Zeilensummen entsprechen `betrag_netto`/`mwst_betrag`/
+`betrag_brutto` des Belegs auf den Cent (Beträge werden erfasst, nicht berechnet
+— keine Verteilungsrundung im Code).
+
+Absicherung: `trg_beleg_steuerzeilen_konsistenz` und
+`trg_belege_steuerzeilen_konsistenz` sind **CONSTRAINT TRIGGER DEFERRABLE
+INITIALLY DEFERRED** — die Invarianten sind Mehrzeilen-Regeln und je Zeile gar
+nicht prüfbar (nach der ersten von zwei Zeilen existiert genau 1 Zeile und die
+Summe stimmt noch nicht). Der Trigger auf `belege` ist die Gegenrichtung: ohne
+ihn liesse sich `mwst_satz` nachträglich setzen, während Zeilen existieren.
+Festschreibung: `fn_beleg_steuerzeilen_unveraenderbar` sperrt INSERT/UPDATE/
+DELETE, sobald der Beleg `geprueft`/`exportiert` ist — strenger als
+`beleg_seiten`, wo BER-118 ein Nachreichen erlaubt. RLS: vier Policies für
+`dashboard_service`, Mandant ausschließlich über den Join auf `belege`
+(kein Selbstbezug — 42P17).
+
+Stand: nur Datenmodell. App, DATEV-Export (`belegRow → belegRows`) und n8n
+schreiben noch keine Zeilen — bis dahin ist das Systemverhalten unverändert.
+
 ## mandanten · firmen · kunden
 
 - `kunden`: id, name, email, telefon, adresse, aktiv, notizen. RLS service_role.
@@ -147,6 +176,8 @@ belegnummern[], duplikatdateien[], fehlerdateien[{datei, grund}]}.
 | `fn_belege_festschreibung` | ◆ WHITELIST-Endfassung (Migration §7): alles eingefroren außer status-Übergang, Export-Metadaten (einmalig), updated_at, den ➕-Spalten samt Kopplungen |
 | `fn_beleg_seiten_unveraenderbar` | Seiten: kein UPDATE; DELETE nur bei offenem Beleg |
 | ◆ `fn_beleg_seiten_insert_guard` | BEFORE INSERT: bei festgeschriebenem Beleg nur EINE Seite (BER-118); ersetzt die rekursive Policy-Selbstreferenz |
+| `fn_beleg_steuerzeilen_konsistenz` | BER-122: Mehrzeilen-Invarianten (0-oder-≥2 Zeilen, Centgleichheit der Summen, Zeilen ⊻ Einzelsatz). Hängt als **deferred** CONSTRAINT TRIGGER an `beleg_steuerzeilen` UND `belege` |
+| `fn_beleg_steuerzeilen_unveraenderbar` | BER-122: Steuerzeilen festgeschriebener Belege sind unveränderlich (INSERT/UPDATE/DELETE gesperrt) |
 | `fn_audit_log_append_only` | Audit unveränderlich |
 | ◆ `fn_datev_exporte_schutz` | Export-Fassungen unveränderlich + Hash-Integrität |
 | `log_beleg_aenderungen` | auto-Audit status/sachkonto; ◆ stempelt mandant_id |

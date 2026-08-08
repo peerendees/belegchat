@@ -79,6 +79,8 @@
 | `specs/migrations/20260723_fix_seiten_insert_recursion.sql` | Korrektur-Migration: RLS-Rekursion `dash_seiten_insert` (im Baulauf S1 vom Trigger-Test gefunden + behoben) |
 | `specs/migrations/20260723_korrektur_2024_vorabgabe.sql` | Protokoll der Einmal-Korrektur des 2024-Altbestands (6 Fehlkontierungen, Belegnummern 2026→2024) vor Erstabgabe |
 | `specs/migrations/20260801_korrektur_termin_ort_0035.sql` | Protokoll der Einmal-Korrektur `termin_ort` an 01-2026-0035 vor dem ersten Auswärts-Export (BER-126, Verfahrensdoku Ä-7) |
+| `specs/migrations/20260808_beleg_steuerzeilen.sql` | BER-122 Stufe 1: Tabelle `beleg_steuerzeilen` (mehrere MwSt-Sätze pro Beleg) + deferred Konsistenz-Trigger, Festschreibungs-Trigger, RLS |
+| `specs/migrations/20260808_ber122_trigger_tests.sql` | BER-122 Verhaltens-Tests zur Migration (Rollback-Transaktion, Test-Mandant Firma 99) |
 
 ## Journal
 
